@@ -1,0 +1,37 @@
+% header.tex — preamble additions for the lualatex build.
+% Goal: an academic Latin Modern look, with a belt-and-suspenders guarantee that
+% none of the 20 non-ASCII glyphs in paper.md can silently drop.
+
+% (fontspec is already loaded by pandoc's template for lualatex; re-stating is harmless.)
+% Academic Latin Modern body. Non-ASCII coverage is guaranteed by the \newunicodechar
+% net below (the luaotfload font-fallback feature is unreliable on this MiKTeX build,
+% so we do not use it — every non-ASCII glyph in paper.md is mapped explicitly).
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman}
+\setsansfont{Latin Modern Sans}
+\setmonofont{Latin Modern Mono}
+
+\usepackage{microtype}
+\usepackage{xurl}            % break long URLs (dashboard/github links) instead of overflowing
+\setlength{\emergencystretch}{3em}
+
+% Glyph safety net: map the math-ish Unicode used in prose to real LaTeX glyphs,
+% so they render even if the font fallback misses (independent guarantee).
+\usepackage{newunicodechar}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{∈}{\ensuremath{\in}}
+\newunicodechar{∎}{\ensuremath{\blacksquare}}
+\newunicodechar{·}{\ensuremath{\cdot}}
+\newunicodechar{…}{\ldots}
+\newunicodechar{⁵}{\textsuperscript{5}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{τ}{\ensuremath{\tau}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{Γ}{\ensuremath{\Gamma}}
+% (§, em/en dash, middle interpunct, ï are covered natively by Latin Modern Roman.)

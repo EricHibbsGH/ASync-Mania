@@ -1,0 +1,1305 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+  letterpaper,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage{setspace}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{\textbf{#1}}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+% header.tex — preamble additions for the lualatex build.
+% Goal: an academic Latin Modern look, with a belt-and-suspenders guarantee that
+% none of the 20 non-ASCII glyphs in paper.md can silently drop.
+
+% (fontspec is already loaded by pandoc's template for lualatex; re-stating is harmless.)
+% Academic Latin Modern body. Non-ASCII coverage is guaranteed by the \newunicodechar
+% net below (the luaotfload font-fallback feature is unreliable on this MiKTeX build,
+% so we do not use it — every non-ASCII glyph in paper.md is mapped explicitly).
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman}
+\setsansfont{Latin Modern Sans}
+\setmonofont{Latin Modern Mono}
+
+\usepackage{microtype}
+\usepackage{xurl}            % break long URLs (dashboard/github links) instead of overflowing
+\setlength{\emergencystretch}{3em}
+
+% Glyph safety net: map the math-ish Unicode used in prose to real LaTeX glyphs,
+% so they render even if the font fallback misses (independent guarantee).
+\usepackage{newunicodechar}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{∈}{\ensuremath{\in}}
+\newunicodechar{∎}{\ensuremath{\blacksquare}}
+\newunicodechar{·}{\ensuremath{\cdot}}
+\newunicodechar{…}{\ldots}
+\newunicodechar{⁵}{\textsuperscript{5}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{τ}{\ensuremath{\tau}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{Γ}{\ensuremath{\Gamma}}
+% (§, em/en dash, middle interpunct, ï are covered natively by Latin Modern Roman.)
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={Overlapping{,} Not Approximating: Asynchronous-Style Speedup in Reasoning-RL Training and the Lossless Design of TLT},
+  pdfauthor={Eric Hibbs, independent analysis (not the original ASPLOS paper); see provenance note},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Overlapping, Not Approximating: Asynchronous-Style Speedup in
+Reasoning-RL Training and the Lossless Design of TLT}
+\author{Eric Hibbs, independent analysis (not the original ASPLOS
+paper); see provenance note}
+\date{Built 2026-06-08 from paper.md (frozen content; mtime 2026-06-08
+09:07)}
+
+\begin{document}
+\maketitle
+
+% frontmatter.tex — inserted after \maketitle, before the TOC.
+% Provenance framing + four-axis legend (metadata framing, not content). No bold, no em-dashes.
+\begin{center}
+\fbox{\parbox{0.93\linewidth}{\small
+\textit{Independent analysis, not the original ASPLOS paper.}\;
+This document is an independent analysis and synthesis built on Hu, Yang \emph{et al.},
+\emph{Taming the Long-Tail: Efficient Reasoning RL Training with Adaptive Drafter}
+(ASPLOS~'26, arXiv:2511.16665v2, CC-BY-4.0). Analytical models are adapted from the interactive
+companion dashboard by Eric Hibbs, and mechanism claims are grounded in the released
+code (\texttt{mit-han-lab/fastrl}, Apache-2.0). All original experimental results belong to
+the paper's authors.
+
+\medskip
+\textit{Provenance legend (four axes).}\;
+\texttt{[Paper:\ §/Fig/Tbl]} = measured in the source paper;\;
+\texttt{[Dashboard:\ Model Math §N]} = modeled, assumption-based (Hibbs), not a paper result;\;
+\texttt{[Code:\ path]} = confirmed in the released fastrl source;\;
+\texttt{[Author synthesis]} = this document's own reasoning.
+}}
+\end{center}
+\vspace{0.6em}
+
+{
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+\listoffigures
+\listoftables
+\setstretch{1.05}
+\subsection{Abstract}\label{abstract}
+
+Reinforcement-learning training of reasoning LLMs is throttled by a
+\emph{long-tail} rollout problem: a handful of very long generations
+dominate each step while most workers sit idle. TLT attacks this not by
+approximating the algorithm but by overlapping otherwise-idle work in
+time. Its two pillars, an \emph{Adaptive Drafter} trained
+opportunistically on idle GPUs during the tail, and an \emph{Adaptive
+Rollout Engine} that turns on speculative decoding (SD) exactly when the
+batch shrinks into SD's sweet spot, convert wasted tail bubbles into
+useful compute while keeping training token-level lossless and strictly
+on-policy. The paper reports ``over 1.7×'' end-to-end speedup over
+state-of-the-art systems {[}Paper Abstract{]}, with the figure-level
+range given as 1.7--2.1× over VeRL {[}Paper Fig 11{]}, a geomean of
+1.86× on H100 and 1.70× on A100, and a peak of 2.12× on Qwen-32B/H100
+{[}Paper Fig 11, Tbl 3{]}. Rollout alone is ≈85\% of step time {[}Paper
+§1, Fig 1a{]}. This paper frames TLT around its
+\emph{asynchrony/concurrency} mechanisms, non-blocking drafter training,
+preemptible opportunistic scheduling, selective asynchronous
+checkpointing, and tail-phase adaptive SD, pairs each with its measured
+speedup \emph{and its implementation in the released code}, develops a
+mathematical model of where the gains come from and why they saturate
+(using the dashboard's order-statistic, Markov-acceptance,
+optimal-stopping, and moving-target-convergence derivations, each with
+its assumptions flagged), and contrasts TLT's \emph{lossless} synchrony
+with the off-policy drift risked by fully asynchronous RL systems. The
+thesis: you can capture async-style utilization gains without paying the
+correctness tax of async RL.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{quote}
+Provenance conventions (four axes). Every quantitative or mechanistic
+claim is tagged: {[}Paper §/Fig/Tbl{]} = stated in the TLT paper
+(\emph{measured}); {[}Dashboard §N{]} = derived/assumed by the dashboard
+author (Hibbs) in ``Model Math'' (\emph{modeled, assumption-based, NOT a
+paper result}); {[}Code: path{]} = confirmed against the released repo
+(\emph{implemented}; \texttt{mit-han-lab/fastrl} @ commit
+\texttt{bce3df7}); {[}Author synthesis{]} = my own derivation or framing
+(\emph{synthesized}). Direct quotes are verbatim, \textless{} 15 words,
+at most one per source per claim; everything else is paraphrase.
+``Lossless'' throughout means token-level distributional equivalence of
+rollouts, speculative-decoding verification preserves the target model's
+exact sampling distribution; it is not a claim about convergence or
+final accuracy. Throughput numbers are per-step token throughput at
+matched reward curves, not wall-clock-to-convergence.
+\end{quote}
+
+\subsection{1. Introduction}\label{introduction}
+
+\subsubsection{1.1 The long-tail
+bottleneck}\label{the-long-tail-bottleneck}
+
+A GRPO-style RL step has three stages, rollout (generate candidate
+responses), inference (score them and compute a KL penalty), and
+training (update the policy). The first stage dominates: the paper
+measures the rollout phase at approximately 85\% of total step time
+{[}Paper §1 item (1), Fig 1a{]}. Worse, rollout latency is governed by
+the \emph{slowest} response in the batch, and response lengths are
+heavy-tailed: most are short, a few hit the configured maximum. The
+production evidence is stark. A ByteDance trace {[}Paper Fig 2{]} of
+Qwen2.5-32B on 128 H20-96GB GPUs ran 11 days for only 385 steps,
+averaging ≈40 min/step, with evaluation every 5 steps costing ≈20 min
+each, under a customized max length of 20,480 tokens {[}Paper §1 item
+(3), Fig 2{]}. Because the batch finishes only when its longest member
+finishes, the gap between the maximum and the 75th percentile is a
+direct measure of wasted GPU-time, an ``under-utilized zone'' visible
+across the entire run {[}Paper Fig 2{]}. (A schematic of this
+distribution and the under-utilized zone is in
+\hyperref[figures]{Figures}, \texttt{fig1\_longtail\_SCHEMATIC},
+illustrative only, since the raw per-request distribution is not
+published as numbers.)
+
+\subsubsection{\texorpdfstring{1.2 Why asynchronous \emph{overlap}, not
+approximation}{1.2 Why asynchronous overlap, not approximation}}\label{why-asynchronous-overlap-not-approximation}
+
+There are two ways to make a tail-bound workload faster. One is to
+approximate: drop the stragglers, accept stale gradients, or mix policy
+versions, the route taken by fully asynchronous RL. These trade
+correctness for utilization. The other is to overlap: keep the algorithm
+exact, but fill the idle time the tail creates with useful, independent
+work. TLT takes the second route. Its design rests on two insights
+stated by the paper: rollout bubbles can be exploited because resources
+freed as short sequences finish can be repurposed at no extra cost, and
+drafter training can be decoupled from rollout completion so that its
+computation overlaps ongoing rollouts rather than following them
+{[}Paper §1, §4.2{]}. Speculative decoding is the ideal payload because
+it is ``Mathematically Lossless'' {[}Paper §2.2{]}, the accepted token
+distribution is identical to the target's, and it is most effective
+precisely in the tail, where effective batch sizes are small and
+decoding is memory-bound. The result is \emph{async-style utilization}
+(idle GPUs doing work) with \emph{synchronous-grade correctness} (the RL
+update is unchanged).
+
+\subsubsection{1.3 Contributions of this
+paper}\label{contributions-of-this-paper}
+
+This is a survey-and-analysis paper, not a new system. Its contributions
+are: (i) a reframing of TLT around the concurrency mechanisms that
+produce its speedups, each paired with its measured number and its
+location in the released code (§4, grounded by a full mechanism→code
+audit); (ii) a consolidated mathematical model of the speedup and its
+saturation, built from the dashboard's derivations with every assumption
+flagged and connected to the paper's tables (§3, §5); (iii) a synthesis
+of TLT's evaluation (§6); (iv) an analysis of why TLT stays losslessly
+synchronous where async-RL systems risk off-policy drift (§7); (v) an
+Implementation \& Reproducibility account and a Threats-to-Validity /
+Assumptions ledger (§8--§9); and (vi) a four-way-attributed treatment
+(paper / dashboard / code / synthesis) of every claim.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{2. Background and
+Motivation}\label{background-and-motivation}
+
+\subsubsection{2.1 Reasoning RL and GRPO's three
+stages}\label{reasoning-rl-and-grpos-three-stages}
+
+Reasoning LLMs improve through \emph{test-time scaling}: longer chains
+of thought and self-reflection raise accuracy, and these behaviors are
+largely acquired during RL {[}Paper §2.1{]}. The paper uses Group
+Relative Policy Optimization (GRPO), which replaces PPO's learned critic
+with a group-relative baseline, cutting overhead {[}Paper §2.1{]}. A
+single GRPO step {[}Paper Fig 4{]} is:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Rollout, the target model generates multiple responses per prompt
+  (autoregressive decoding; the long-tail stage). The released runs use
+  a group size of n = 8 responses/prompt {[}Code:
+  examples/grpo\_7B.sh{]}.
+\item
+  Inference, responses are prefilled by both the target and a frozen
+  reference model to compute a KL-divergence penalty; a rule-based
+  reward (e.g., answer correctness) is computed. The code applies KL as
+  a loss term (\texttt{low\_var\_kl}, coefficient 0.001), not folded
+  into the reward {[}Code: examples/grpo\_7B.sh{]}.
+\item
+  Training, a loss combining reward and KL updates the target weights.
+\end{enumerate}
+
+The asymmetry matters: rollout is sequential token-by-token generation
+(latency-bound, tail-dominated), while inference and training are
+batched prefills/backward passes. TLT inserts its opportunistic work
+into stage 1's tail and reuses stage 2's hidden states.
+
+\subsubsection{2.2 Speculative decoding: lossless, and a memory→compute
+shift}\label{speculative-decoding-lossless-and-a-memorycompute-shift}
+
+In speculative decoding a small draft model proposes a short run of
+tokens, and the large target verifies them all in one parallel forward
+pass, accepting the longest correct prefix plus one corrected token
+{[}Paper §2.2, Fig 5{]}. Two properties make SD ideal for RL. First, it
+is token-level lossless: the verification step preserves the target's
+exact next-token sampling distribution, so the accepted sequence is
+distributed identically to ordinary autoregressive sampling from the
+target (this is a \emph{distributional} guarantee on rollouts, not a
+statement about convergence). Second, it changes the \emph{arithmetic
+intensity}: autoregressive decoding at small batch is memory-bound (one
+token's weights streamed per step); verifying γ speculative tokens at
+once is compute-bound, better saturating the GPU. The paper's roofline
+analysis shows SD reaching peak TFLOPS at far smaller batch sizes than
+vanilla decoding {[}Paper Fig 5c{]}, i.e., SD's benefit is largest
+exactly where the tail lives (few in-flight requests). The paper
+summarizes the mechanism as shifting from ``memory-bound towards
+compute-bound'' {[}Paper §2.2{]}.
+
+Three challenges block naïve SD in RL {[}Paper §2.2/§2
+``Challenges''{]}: C1, the evolving target model makes a fixed drafter
+go stale; C2, drafter training cost; C3, fluctuating batch sizes, since
+SD that helps at batch 1 can hurt or OOM at large batch. TLT's two
+components answer C1/C2 (Adaptive Drafter) and C3 (Adaptive Rollout
+Engine).
+
+\subsubsection{2.3 What ``asynchronous'' means
+here}\label{what-asynchronous-means-here}
+
+This is the crux of the framing, and the word is overloaded. In async-RL
+systems (e.g., AReaL), ``asynchronous'' means \emph{algorithmic}
+asynchrony: the policy is updated from rollouts generated by
+\emph{earlier} policy versions, so training and generation run on
+different model versions concurrently, fast, but off-policy. In TLT,
+``asynchronous'' means \emph{systems-level} overlap with \emph{no}
+algorithmic change: the policy update still consumes only on-policy
+rollouts of the current version; what runs concurrently is the
+\emph{drafter's} training and the \emph{checkpoint's} save, neither of
+which touches the policy gradient. TLT's first design principle is an
+explicit ``Lossless Guarantee'' that forbids asynchronous staleness in
+the RL update itself {[}Paper §3{]}. So the entire speedup must come
+from overlapping \emph{auxiliary} work, never from desynchronizing the
+\emph{core} work, the distinction this paper builds on.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{3. The Long-Tail, Formally}\label{the-long-tail-formally}
+
+The paper's evidence for the tail is empirical: the response-length
+histogram with a max length of 30K for Qwen-7B and DeepSeek-R1-7B
+{[}Paper Fig 1a{]}, and the ByteDance percentile trace {[}Paper Fig
+2{]}. The dashboard supplies a \emph{motivating} closed-form analysis on
+top of this. It is useful intuition but rests on an assumption the paper
+does not make, so it is flagged throughout.
+
+\subsubsection{3.1 Batch completion as an order
+statistic}\label{batch-completion-as-an-order-statistic}
+
+Let a batch hold \(B\) responses with token-lengths \(L_1,\dots,L_B\).
+If response \(i\) decodes at throughput \(\text{throughput}_i\), the
+batch finishes only when its slowest member does:
+\[T_{\text{batch}} = \max_{i=1}^{B}\frac{L_i}{\text{throughput}_i}.\qquad\text{[Dashboard §1]}\]
+The bottleneck is therefore the maximum, a classical order statistic,
+the formal version of ``a few very long responses dominate execution
+time'' {[}Paper Abstract{]}.
+
+\subsubsection{3.2 Expected maximum under a Pareto tail (with the
+assumption
+flagged)}\label{expected-maximum-under-a-pareto-tail-with-the-assumption-flagged}
+
+The dashboard models the tail as Pareto,
+\(P(L>x) = (x_{\min}/x)^{\alpha}\) with shape \(\alpha>1\), i.e.~CDF
+\(F(x)=1-(x_{\min}/x)^{\alpha}\) {[}Dashboard §1{]}. This is an
+{[}Assumption{]}: the dashboard explicitly notes the paper's Fig 1a is
+empirical (log-normal-shaped) and that Pareto is chosen only for a
+tractable closed form {[}Dashboard §1 assumption tag{]}. With that
+caveat, the dashboard states the expected maximum as
+\[\mathbb{E}[M_B] = x_{\min}\cdot B^{1/\alpha}\cdot\frac{\alpha}{\alpha-1}.\qquad\text{[Dashboard §1]}\]
+
+Step-by-step derivation {[}Author synthesis{]}. Let \(M_B=\max_i L_i\)
+with the \(L_i\) i.i.d. Pareto. Then \(P(M_B\le x)=F(x)^B\). The exact
+expectation is
+\[\mathbb{E}[M_B] = x_{\min}\,\frac{\Gamma(B+1)\,\Gamma\!\left(1-\tfrac{1}{\alpha}\right)}{\Gamma\!\left(B+1-\tfrac{1}{\alpha}\right)},\qquad \alpha>1.\]
+Using the ratio asymptotic
+\(\Gamma(B+1)/\Gamma(B+1-\tfrac{1}{\alpha})\sim B^{1/\alpha}\) for large
+\(B\) (Stirling), this becomes
+\(\mathbb{E}[M_B]\approx x_{\min}B^{1/\alpha}\Gamma(1-\tfrac1\alpha)\).
+The dashboard's form replaces the tail constant
+\(\Gamma(1-\tfrac1\alpha)\) with \(\tfrac{\alpha}{\alpha-1}\), the
+Pareto mean \(\mathbb{E}[L]=x_{\min}\tfrac{\alpha}{\alpha-1}\). So the
+dashboard's closed form is best read as \emph{``scale the mean by the
+order-statistic growth factor \(B^{1/\alpha}\).''}
+
+What it means physically. The straggler grows as \(B^{1/\alpha}\): the
+heavier the tail (smaller \(\alpha\)), the faster the worst case blows
+up as you widen the batch, and the deeper the rollout bubble, and, read
+in reverse, the more freed capacity becomes available for opportunistic
+work.
+
+Numerical recomputation and a flagged error {[}Author synthesis{]}. I
+recomputed the α=2, B=128 case (exact Γ formula + 2×10⁵-sample
+Monte-Carlo): \(\mathbb{E}[M_B]\approx\mathbf{20.07\,x_{\min}}\) (exact)
+/ 20.14 (MC); the dashboard's own closed form gives 22.63 (it mildly
+over-states, since \(\tfrac{\alpha}{\alpha-1}=2\) exceeds
+\(\Gamma(\tfrac12)=\sqrt\pi\approx1.77\)). The Pareto median is
+\(x_{\min}\sqrt2\), so the true expected-max/median ratio is ≈14×
+(exact/MC), or 16× under the dashboard's formula. The dashboard's worked
+example states ``≈5.7× vs median'' {[}Dashboard §1{]}, this is
+numerically wrong: \(5.7\approx\sqrt{128}/2=B^{1/\alpha}/\alpha\), a
+mis-normalization (it drops the mean factor and mis-divides). The
+qualitative point (the straggler is many-fold the median) holds, but the
+\emph{specific} multiplier is the dashboard's and should not be cited as
+a derived result; the correct figure is ≈14×.
+
+\subsubsection{3.3 From the math back to the paper's
+measurement}\label{from-the-math-back-to-the-papers-measurement}
+
+The order-statistic view predicts that under-utilization is structural,
+not incidental, which is exactly what the paper observes empirically and
+persistently across 385 steps {[}Paper Fig 2{]}, and what motivates
+harvesting the bubble rather than merely shortening it.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{4. Mechanisms of Async
+Speedup}\label{mechanisms-of-async-speedup}
+
+Each subsection names a concurrency mechanism, pairs it with its
+measured effect {[}Paper{]}, and grounds it in the released code
+{[}Code{]} (full audit: \texttt{phase1\_code\_grounding.md}; all 11
+mechanisms located and confirmed). Collectively they convert the tail
+bubble (§3) into the end-to-end gains of §6.
+
+\subsubsection{4.1 Non-blocking Spot Trainer + DataBuffer (overlapping
+drafter training with
+rollout)}\label{non-blocking-spot-trainer-databuffer-overlapping-drafter-training-with-rollout}
+
+The core asynchrony is decoupling drafter training from rollout
+completion. Vanilla RL runs rollout → inference → training in sequence;
+a naïve SpecRL bolts drafter training on as another sequential step
+{[}Paper Fig 8a,b{]}. The Spot Trainer, class
+\texttt{EagleBackgroundTrainer} {[}Code:
+verl/workers/drafter/eagle\_background\_trainer.py:35{]}, instead trains
+the drafter on \emph{partial} responses as soon as enough short
+sequences finish, executing ``in a non-blocking manner'' during the tail
+{[}Paper §4.2, Fig 8c{]}.
+
+Training only on early finishers would bias the drafter away from long
+sequences, so TLT adds the DataBuffer {[}Code:
+verl/utils/data\_buffer.py{]}: it caches hidden states and tokens from
+the inference stage and uses one-step-offset sampling, confirmed in code
+as collecting data the step \emph{before} training
+(\texttt{should\_collect\_data\_this\_step} fires at
+\texttt{(step+1)\ \%\ interval\ ==\ 0}) and drawing the training batch
+from the last \texttt{buffer\_steps\ =\ 2} RL steps {[}Code:
+worker\_manager.py:490-493; eagle\_background\_trainer.py:276{]}.
+\emph{Provenance nuance:} the paper describes prioritizing the previous
+step's long sequences; the released code samples the last two steps via
+\texttt{random.sample} over a response-centered 512-token window, the
+cross-step offset is confirmed, but an explicit \emph{length-ranked}
+prioritization is not present as written {[}Code; see §9{]}. The paper
+reports that partial current-step data combined with buffered sequences
+attains performance comparable to full-set training {[}Paper §4.2{]}.
+The hidden states are \emph{reused} from the inference phase, so drafter
+training adds no extra prefill; the target is ``over 20×'' larger than
+the draft model {[}Paper §4.1{]}.
+
+\emph{Measured effect:} this mechanism makes the drafter a ``free
+byproduct'' {[}Paper Abstract{]}, its training cost is hidden inside the
+bubble.
+
+\subsubsection{4.2 Worker Coordinator state machine (preemptible
+opportunistic
+scheduling)}\label{worker-coordinator-state-machine-preemptible-opportunistic-scheduling}
+
+The bubble must be harvested without disturbing rollout. A centralized
+Worker Coordinator (\texttt{RolloutDrafterManager} +
+\texttt{CentralCoordinator}, rank-0, ZeroMQ; REP/PUB on the coordinator,
+REQ/SUB on workers) tracks each worker, one rollout instance, e.g.~a
+TP=8 worker spans 8 GPUs {[}Paper §4.2; Code:
+worker\_manager.py:91-107,441{]}. The paper summarizes the lifecycle as
+BUSY → IDLE → TRAINING {[}Paper §4.2{]}; the released code implements a
+five-state machine,
+\texttt{IDLE\ /\ GENERATING\ /\ RELEASED\ /\ TRAINING\ /\ COMPLETED},
+where the paper's ``BUSY'' = \texttt{GENERATING} and ``IDLE (memory
+released)'' = \texttt{RELEASED} {[}Code: worker\_manager.py:54-61{]}.
+Once enough workers release, the coordinator promotes them to training
+(default threshold \texttt{min\_workers\_for\_training\ =\ 1}) and, on
+rollout completion, broadcasts
+\texttt{STOP\_TRAINING}/\texttt{BATCH\_COMPLETE} for graceful shutdown
+{[}Code: worker\_manager.py:245-283,204-230; fastrl\_trainer.yaml:25{]}.
+This realizes TLT's ``Interference-Free'' principle {[}Paper §3{]},
+drafter work runs as low-priority ``spot tasks'' {[}Paper §4.2{]}. The
+shipped drafter-training cadence is
+\texttt{training\_interval\_steps\ =\ 10}, matching the paper's ``every
+\textasciitilde10 steps is sufficient'' {[}Paper §6.4; Code:
+fastrl\_trainer.yaml:20{]}.
+
+\emph{Measured effect:} stage-transition overhead is \textless1\% of the
+RL step {[}Paper §6.4{]}.
+
+\subsubsection{4.3 Selective asynchronous checkpointing (overlapping the
+save with
+training)}\label{selective-asynchronous-checkpointing-overlapping-the-save-with-training}
+
+Preemptibility implies frequent checkpoints, which would themselves
+stall training. TLT offloads the save to a background thread
+(\texttt{dcp.async\_save}, PyTorch DCP) and dumps only the drafter's
+trainable parameters, excluding the frozen set
+\texttt{\{model.embed\_tokens.weight,\ lm\_head.weight\}} {[}Code:
+eagle\_background\_trainer.py:83,105-148{]}. The paper's measured ladder
+{[}Paper Fig 17a{]}:
+
+\begin{itemize}
+\tightlist
+\item
+  Vanilla synchronous checkpoint: 893 ms → Async (background thread):
+  280 ms (3.2×) → Selective async (background + trainable-only): 97 ms
+  (9.2× vs vanilla) {[}Paper Fig 17a, §6.4{]}.
+\end{itemize}
+
+\emph{Reading the 9.2× honestly:} this is the paper's end-to-end
+measurement, not a parameter-count ratio. The 3.2× comes from
+overlapping I/O; the further step to 9.2× comes from selectivity, and
+because the object being checkpointed is the single-layer drafter (where
+the frozen, tied embedding + LM head dominate the parameter count),
+excluding them is a large reduction. The async + selective
+\emph{mechanism} is code-confirmed; the exact magnitude is the paper's
+{[}Paper Fig 17a{]}.
+
+\subsubsection{4.4 Drafter architecture and sequence packing (cheap
+payload, dense
+compute)}\label{drafter-architecture-and-sequence-packing-cheap-payload-dense-compute}
+
+The drafter is a single trainable transformer decoder layer
+(\texttt{config.num\_hidden\_layers\ =\ 1}) that reuses the target's
+frozen Embedding and LM Head (\texttt{requires\_grad\ =\ False})
+{[}Paper §4.1, Fig 7; Code:
+eagle-train/eagle\_trainer.py:190,255-258{]}. Only that one layer
+updates, ≈ 1/layer\_num of target parameters {[}Paper §4.1{]}. The
+paper's contrast: Qwen2.5-32B has 64 layers vs Qwen2.5-0.5B's 24; a 64×
+parameter cut still leaves latency dominated by sequential layers, so
+TLT's single-layer drafter, at roughly the parameter count of a
+Qwen2.5-0.5B drafter, is 2.4× faster {[}Paper §4.1{]}. \emph{Code
+refinements:} the drafter loss is \texttt{SmoothL1Loss} (Huber) on
+hidden states + a soft-target cross-entropy on logits, weighted 0.5/0.5,
+a sharper statement of the paper's ``L1 + CE'' {[}Code:
+eagle\_background\_trainer.py:73,558-578{]}; and the ``frozen LM head''
+holds on the default EAGLE path but not on the EAGLE-3 path, where the
+LM head is trainable for the draft vocabulary {[}Code:
+eagle3\_trainer.py:475; see §9{]}.
+
+Within the preemptible slots, sequence packing concatenates
+variable-length sequences (attention-masked, no padding) to keep the GPU
+dense {[}Paper §4.2; Code: eagle\_background\_trainer.py:410-417;
+verl/models/mcore/util.py{]}. \emph{Measured effect:} training
+throughput rises 13.3 → 29.6 samples/s (2.2×) over padded batching
+{[}Paper Fig 17b{]}. (See \hyperref[figures]{Figures}:
+\texttt{fig17\_spot\_trainer}.)
+
+\subsubsection{4.5 Adaptive SD + Bucketed CUDAGraph + BEG-MAB
+(tail-phase, OOM-safe,
+self-tuning)}\label{adaptive-sd-bucketed-cudagraph-beg-mab-tail-phase-oom-safe-self-tuning}
+
+SD must be turned on only where it helps. The Adaptive SD Manager
+activates SD only when the remaining request count drops below a
+threshold (default 32) {[}Paper §5.1; Code: examples/grpo\_7B.sh:28
+\texttt{speculative.bs\_threshold=32}{]}. The code adds a hysteresis the
+paper omits: SD enables only after the batch stays \texttt{≤\ 32} for 10
+consecutive checks (\texttt{adaptive\_spec\_warmup\_checks}), and the
+counter resets above threshold {[}Code: eagle\_worker.py:361,364,196{]}.
+Tree-based drafting explores the topK branches for \texttt{Draft\_Depth}
+steps and verifies the \texttt{Tokens\_to\_Verify} highest-confidence
+tokens in parallel {[}Paper §5.1, Fig 9; Code:
+eagle\_worker.py:748-821{]}.
+
+Bucketed CUDAGraph Capture groups batch sizes into buckets,
+disaggregates target vs draft graph capture, and merges identical
+configurations {[}Paper §5.1; Code: server\_args.py:789-796{]}.
+\emph{Measured effect} {[}Paper Tbl 5, Llama-3-8B, TP=4{]}: Single
+strategy 7.81 GB; naïve multi-strategy 30.39 GB; Bucketed 10.69 GB, a
+2.8× reduction vs naïve at near single-strategy cost.
+
+Strategy selection is automated by the BEG-MAB tuner
+(\texttt{BucketedEpsilonGreedyMAB}): each arm is
+\texttt{(Draft\_Depth,\ topK,\ Tokens\_to\_Verify)}, bucketed by
+\texttt{Tokens\_to\_Verify}, exploiting the median reward over a sliding
+window {[}Paper §5.2, Alg 1; Code: eagle\_mab.py:197-292{]}. The exact
+reward is code-confirmed:
+\texttt{a\ =\ sum(accept\_len)/batch\_size\ +\ 1},
+\texttt{reward\ =\ a\ ·\ batch\_size\ /\ elapsed\_time} {[}Code:
+eagle\_worker.py:1234,1240{]}, matching Algorithm 1. Code-level defaults
+the paper omits: ε = 0.1, window = 1000, bucket thresholds
+{[}1,2,5,21{]}, and an OOM guard
+\texttt{draft\_tokens\ ×\ batch\_size\ ≤\ 2048} {[}Code:
+eagle\_mab.py:210,220,442{]}. For early steps, a model-free n-gram
+drafter (Lookahead-style) is the fallback, with defaults
+\texttt{max\_match\_window\ =\ 12}, \texttt{branch\_length\ =\ 18}
+{[}Paper §5.3; Code: ngram\_worker.py; server\_args.py:342-347{]}.
+
+\emph{Measured effect (case study)} {[}Paper Fig 14{]}: 128 requests on
+Qwen-32B/H100, SD switches on below 32 remaining requests and delivers
+an overall 2.44× over the no-SD baseline.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{5. A Mathematical Model of the
+Speedup}\label{a-mathematical-model-of-the-speedup}
+
+Every closed form here is the dashboard author's {[}Dashboard §2--§4{]},
+\emph{modeled, assumption-based}; the paper's numbers are the empirical
+anchors, and \texttt{phase3\_accuracy.md} records the numerical
+re-derivations. These models are qualitative, not predictive fits to the
+paper's tables.
+
+\subsubsection{5.1 Speculative decoding as a truncated geometric
+process}\label{speculative-decoding-as-a-truncated-geometric-process}
+
+Assume the drafter proposes \(\gamma\) tokens and each is independently
+accepted with probability \(\alpha\). This uniform per-token accept rate
+is an {[}Assumption{]}, real rates decline with position (paper Fig 16)
+{[}Dashboard §2{]}. Then
+\[\mathbb{E}[n] = \frac{1-\alpha^{\gamma+1}}{1-\alpha}.\qquad\text{[Dashboard §2]}\]
+
+Derivation {[}Author synthesis{]}. With \(A\) the accepted-prefix
+length, \(P(A\ge k)=\alpha^{k}\); the per-position law is
+\(P(A=k)=\alpha^k(1-\alpha)\) for \(k<\gamma\) and
+\(P(A=\gamma)=\alpha^\gamma\). Tokens committed \(=A+1\), so
+\(\mathbb{E}[n]=\sum_{k=0}^{\gamma}\alpha^k\); the geometric sum gives
+\(\frac{1-\alpha^{\gamma+1}}{1-\alpha}\). ∎ Verified:
+\(\alpha\to1\Rightarrow\gamma+1\) (computed 9.000 at γ=8);
+\(\gamma\to\infty\Rightarrow\frac1{1-\alpha}\) (cap 5.0 at α=0.8). This
+tapering matches the paper's accept-length saturation {[}Paper Fig
+13a{]}, max 9.78 at depth 16/verify 128. Violation: Fig 16 shows α
+decaying with depth, so the uniform-α premise does not hold in practice,
+the model is \emph{qualitative}.
+
+\subsubsection{5.2 The speedup, and why there is an optimal
+depth}\label{the-speedup-and-why-there-is-an-optimal-depth}
+
+With \(c=T_{\text{verify}}/T_{\text{draft}}\):
+\[\text{speedup}=\frac{\mathbb{E}[n]}{1+\gamma/c}.\qquad\text{[Dashboard §2]}\]
+Reading {[}Author synthesis{]}. Numerator saturates in \(\gamma\)
+(§5.1); denominator grows linearly ⇒ an inverted-U with interior
+optimum. Verified: \(\arg\max_\gamma\) speedup = 3/5/7 for \(c\) =
+4/8/16, and the optimum grows with \(c\), qualitatively matching the
+paper's grid peak of 3.66× at depth 12/verify 64 {[}Paper Fig 13b{]}.
+The companion topK sweep is nearly flat, accept length 8.29--8.67,
+speedup 3.47×--3.65× across topK 4--16 {[}Paper Tbl 1{]}, so TLT fixes
+topK and tunes the rest. \emph{Note on conditions:} the SD grids (Fig
+13/Tbl 1) are measured at temperature 0 for stable accept-length
+readings; the operative accept rates during training (temp 0.9) are
+those in Tbl 6/Fig 16. (See \hyperref[figures]{Figures}:
+\texttt{fig13\_sd\_grid\_heatmaps},
+\texttt{dashboard\_markov\_surface}.)
+
+\subsubsection{5.3 The adaptive threshold as optimal stopping (why SD
+collapses at large
+batch)}\label{the-adaptive-threshold-as-optimal-stopping-why-sd-collapses-at-large-batch}
+
+The dashboard models per-request SD benefit at \(k\) active requests as
+exponential decay and asks when aggregate benefit clears the switch cost
+\(O_{\text{SD}}\):
+\[b(k)=b_0\,e^{-k/\tau},\qquad\text{activate when } k\cdot b(k)\ge O_{\text{SD}}.\qquad\text{[Dashboard §3]}\]
+\(\tau=16\) is an {[}Assumption{]} fit to Table 4, not in the paper
+{[}Dashboard §3{]}. Reading {[}Author synthesis{]}.
+\(g(k)=b_0 k e^{-k/\tau}\) peaks at \(k=\tau\) then decays, so beyond
+some \(k\) aggregate benefit no longer clears the overhead, an
+activation threshold. \emph{Implementation reality:} the deployed rule
+is not this smooth model but a hard \texttt{batch\_size\ ≤\ 32} step
+with a 10-check warmup {[}Code: eagle\_worker.py:361,196{]}; the
+\(b(k)\) model only explains the \emph{direction} of the collapse.
+Empirical anchor, and a dashboard error. Paper Tbl 4 (Qwen-32B, TP=4,
+depth 10, topK 8) shows, at verify-64, BS=1 → 3.62× falling to BS=32 →
+1.70× (2.48× at verify-16). The dashboard's §3 text instead claims SD
+``drops to 1.08× at BS=32'' while citing Table 4 {[}Dashboard §3{]}, but
+no 1.08× appears in Table 4, and its companion ``3.66× at BS=1'' is the
+Fig 13 grid peak, not a Tbl 4 entry {[}Paper Tbl 4; Fig 13b{]}. The
+error is the dashboard's; only the paper's values are used here. (See
+\hyperref[figures]{Figures}: \texttt{tbl4\_batch\_erosion},
+\texttt{dashboard\_threshold\_curve}.)
+
+\subsubsection{5.4 The drafter as a moving target (convergence under
+policy
+drift)}\label{the-drafter-as-a-moving-target-convergence-under-policy-drift}
+
+The drafter minimizes
+\(\mathcal{L}(\theta_t)=\mathbb{E}_{x\sim\pi_t}[-\log p_\theta(x)]\)
+{[}Dashboard §4{]}. Using \(\alpha\approx e^{-D_{\text{KL}}}\) locally
+and a per-step KL recursion (with \(\eta_d\) the drafter step gain,
+\(I_t\) Fisher information, \(\delta_\pi\) policy drift):
+\[D_{\text{KL}}(\pi_{t+1}\Vert p_{\theta_{t+1}})\le D_{\text{KL}}(\pi_t\Vert p_{\theta_t})-\eta_d I_t+\delta_\pi+O(\eta_d^2),\]
+the accept rate is non-decreasing in expectation iff
+\(\eta_d I_t>\delta_\pi\) {[}Dashboard §4{]}. Both rest on an
+{[}Assumption{]} (Fisher ≈ constant; local KL--accept relation). What it
+means {[}Author synthesis{]}. The drafter keeps up iff its per-step
+learning outpaces policy drift, the skeleton of three paper
+observations: the dip-then-recover after each target update {[}Paper Fig
+15{]}; co-training lifting RL accept length 4.59→6.53 and downstream
+3.76→5.15 {[}Paper Tbl 6{]}; and sustained accept rate at distant token
+indices {[}Paper Fig 16{]}. Arithmetically \((6.53-4.59)/4.59=42.3\%\)
+{[}Author synthesis{]}, matching the dashboard's ``+42\%''; the
+dashboard reads Fig 16 as ≈32\% (adaptive) vs ≈6\% (vanilla) at index 8,
+the dashboard's reading, not a printed paper value {[}Dashboard §4{]}.
+(See \hyperref[figures]{Figures}: \texttt{tbl6\_adaptive\_drafter},
+\texttt{fig16\_accept\_decay\_SCHEMATIC}.)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{6. Evaluation Synthesis}\label{evaluation-synthesis}
+
+\subsubsection{6.1 Setup (so the numbers carry their
+conditions)}\label{setup-so-the-numbers-carry-their-conditions}
+
+TLT is built on VeRL + Ray, a ZeroMQ coordinator, EAGLE training
+pipelines under FSDP2, asynchronous checkpointing via PyTorch DCP, and
+SGLang as the rollout backend; the model-free fallback is Lookahead
+{[}Paper §6.1; all code-confirmed, Phase 1{]}. Testbed: 8× DGX H100 = 64
+GPUs (per node: 8 H100, 2× Intel Xeon Platinum 8480C, 2 TB RAM; 900 GB/s
+NVLink, 400 Gb/s InfiniBand), plus a separate A100 cluster {[}Paper
+§6.1{]}. Models: Qwen2.5-7B, DeepSeek-R1-Distill-Qwen-7B, Qwen2.5-32B,
+Llama-3.3-70B-Instruct {[}Paper §6.1{]}. Algorithm: GRPO, temperature
+0.9, max generation 32K, TP ∈ \{2,4,8\}, Adam, BF16 {[}Paper §6.1; Code
+confirms n=8, KL \texttt{low\_var\_kl}/0.001, LR 1e-6{]}. Data:
+Eurus-2-RL (math+code) for RL; an OpenThoughts2-1M subset to warm up the
+drafter {[}Paper §6.1{]}. Baselines: Open-R1, VeRL (SOTA), TLT-Base
+{[}Paper §6.1{]}. Metric: per-step token throughput averaged over three
+steps after warm-up, i.e., gains are \emph{step-throughput at matched
+reward curves} (Fig 12), not a claim of fewer steps to convergence
+{[}Paper §6.1{]}.
+
+\subsubsection{6.2 Consolidated results}\label{consolidated-results}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\caption{Consolidated results: TLT vs.~baselines (per-step token
+throughput; conditions and provenance in columns).
+{[}§6.2{]}}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Condition
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Number
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Source
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Condition
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Number
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Source
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+End-to-end vs VeRL (headline) & over SOTA & \textgreater1.7× (abstract)
+/ 1.7--2.1× (figure) & {[}Paper Abstract; Fig 11{]} \\
+End-to-end geomean & H100 / A100 & 1.86× / 1.70× & {[}Paper Fig 11{]} \\
+End-to-end peak & Qwen-32B, H100, 8 nodes & 2.12× & {[}Paper Fig 11; Tbl
+3{]} \\
+TLT vs VeRL, H100 & Qwen-7B / DS-7B / Qwen-32B / Llama-70B & 1.76 / 1.71
+/ 2.12 / 1.86× & {[}Paper Fig 11{]} \\
+TLT-Base vs VeRL, H100 & same models & 1.42 / 1.38 / 1.54 / 1.31× &
+{[}Paper Fig 11{]} \\
+Rollout share of step & , & ≈85\% & {[}Paper §1; Fig 1a{]} \\
+SD speedup, peak grid & Qwen-32B, BS=1, depth 12/verify 64, temp 0 &
+3.66× & {[}Paper Fig 13b{]} \\
+SD accept length, max & depth 16/verify 128, temp 0 & 9.78 & {[}Paper
+Fig 13a{]} \\
+topK insensitivity & Qwen-32B, depth 12/verify 64 & 3.47--3.65× (topK
+4--16) & {[}Paper Tbl 1{]} \\
+Batch sensitivity (verify 64) & Qwen-32B, depth 10 & 3.62× (BS=1) →
+1.70× (BS=32) & {[}Paper Tbl 4{]} \\
+GPU diversity (rollout, BS1/TP1) & Qwen-7B micro-benchmark & B200 2.33×
+· H100 2.61× · A100 2.79× · RTX5090 2.91× · RTX4090 2.87× · RTX3090
+3.22× & {[}Paper Tbl 2{]} \\
+Cluster scale (Qwen-7B) & 1/2/4/8 nodes & 1.21 / 1.45 / 1.62 / 1.76× &
+{[}Paper Tbl 3{]} \\
+Cluster scale (Qwen-32B) & 1/2/4/8 nodes & OOM / OOM / 1.83 / 2.12× &
+{[}Paper Tbl 3{]} \\
+Bucketed CUDAGraph & Llama-3-8B, TP=4, 4 strategies & 7.81 → 30.39 →
+10.69 GB (2.8× vs naïve) & {[}Paper Tbl 5{]} \\
+Selective async ckpt & drafter checkpoint & 893 → 280 → 97 ms (9.2×) &
+{[}Paper Fig 17a{]} \\
+Sequence packing & , & 13.3 → 29.6 samples/s (2.2×) & {[}Paper Fig
+17b{]} \\
+Adaptive drafter accept len & RL / downstream, Base→R & 4.59→6.53 /
+3.76→5.15 & {[}Paper Tbl 6{]} \\
+SD method (Eagle, default) & Qwen-7B, TP=2, BS=1 & 6.53 acc, 542.12
+tok/s, 2.24×, 1× train cost & {[}Paper Tbl 7{]} \\
+Case study (adaptive SD) & 128 req, Qwen-32B, H100 & 2.44× over no-SD &
+{[}Paper Fig 14{]} \\
+Overheads & , & stage-transition \textless1\%, SD reprefill \textless3
+s, drafter every 10 steps & {[}Paper §6.4{]} \\
+\end{longtable}
+
+\subsubsection{6.3 GPU diversity and
+scalability}\label{gpu-diversity-and-scalability}
+
+SD's relative gain grows on more I/O-bound hardware: 2.33× on B200 up to
+3.22× on RTX 3090 {[}Paper Tbl 2{]}. \emph{Caveat:} this is a BS=1, TP=1
+rollout micro-benchmark, not full-scale training, it isolates the
+memory→compute shift (slower memory subsystems gain more), and is not
+representative of end-to-end training throughput. End-to-end gains grow
+with cluster and model size: Qwen-7B 1.21×→1.76× (1→8 nodes); Qwen-32B
+is OOM at 1--2 nodes and reaches 2.12× at 8 nodes {[}Paper Tbl 3{]},
+larger jobs have longer tails and bigger bubbles to harvest. (See
+\hyperref[figures]{Figures}: \texttt{tbl2\_gpu\_diversity},
+\texttt{tbl3\_cluster\_scaling}, \texttt{fig11\_endtoend\_speedup}.)
+
+\subsubsection{6.4 Drafter quality and SD-method
+choice}\label{drafter-quality-and-sd-method-choice}
+
+Among SD methods in TLT (Qwen-7B, TP=2, BS=1): Base/No-SD 242.11 tok/s
+(1.00×); Eagle 542.12 tok/s, 2.24×, 1× cost; HASS 553.91 tok/s, 2.29×,
+3× cost; Eagle-3 617.42 tok/s, 2.55×, 7× cost {[}Paper Tbl 7{]}. TLT
+defaults to Eagle because higher-accept rivals require multi-pass
+``training-time test'' that inflates per-step cost and convergence
+difficulty, unaffordable in a small rollout bubble {[}Paper §6.5{]}.
+OSD-style training further lifts a Qwen2.5-0.5B drafter (5.95→6.68→6.89)
+and an Eagle drafter (1.57→6.53→6.77) {[}Paper Tbl 8{]}.
+
+\subsubsection{6.5 Overheads and
+losslessness}\label{overheads-and-losslessness}
+
+Overheads are small: stage-transition \textless1\%; SD-switch reprefill
+\textless3 s; drafter trained only every ≈10 steps {[}Paper §6.4{]}.
+Most important for the thesis: VeRL and TLT reward curves overlap
+closely for Qwen2.5-7B and -32B {[}Paper Fig 12{]}, direct evidence the
+overlap-based speedup leaves learning dynamics unchanged. The gains are
+\emph{utilization} (step throughput), not approximation; the paper does
+not claim, and this survey does not assert, a reduction in the
+\emph{number of steps} to a target reward.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{7. Why Not Fully Async?}\label{why-not-fully-async}
+
+\subsubsection{7.1 The tempting next step, and its hidden
+cost}\label{the-tempting-next-step-and-its-hidden-cost}
+
+If idle GPUs can train the drafter, why not also update the
+\emph{policy} asynchronously from partial rollouts during the long
+decode? The paper addresses this in ``Can We Break RL Synchronization?''
+{[}Paper §7{]}. Asynchronous RL with continuous batching ``mixes
+multiple policy versions'' within a single rollout {[}Paper §7{]},
+biasing gradient estimation and drifting on-policy → off-policy. TLT's
+SD approach composes with \emph{limited} async RL ``without introducing
+additional loss or policy staleness'' {[}Paper §7{]}.
+
+\subsubsection{7.2 The lossless/off-policy contrast in the
+model}\label{the-losslessoff-policy-contrast-in-the-model}
+
+The §5.4 condition \(\eta_d I_t>\delta_\pi\) makes the tradeoff legible
+{[}Author synthesis{]}. TLT tolerates \emph{drafter} staleness because
+the drafter affects only SD's \emph{speed}, never the verified output
+distribution, a stale drafter lowers the accept rate but cannot corrupt
+a token (SD is token-level lossless, §2.2). Async RL instead tolerates
+\emph{policy} staleness, which enters the gradient directly: there the
+analogue of \(\delta_\pi\) is not a tracking error to be corrected but a
+bias injected into the update. TLT confines all tolerated staleness to
+the \emph{auxiliary} path and keeps the \emph{core} path exact.
+
+\subsection{8. Implementation \&
+Reproducibility}\label{implementation-reproducibility}
+
+Grounded in the on-disk repository (\texttt{mit-han-lab/fastrl},
+Apache-2.0, \texttt{main} @ \texttt{bce3df7}; full audit in
+\texttt{phase1\_code\_grounding.md}).
+
+Stack \& layout. Top-level \texttt{verl/} (281 .py, RL trainer, workers,
+coordinator, DataBuffer), \texttt{eagle-train/} (12 .py, drafter
+trainers + warm-up), \texttt{third-party/sglang/} (vendored in-tree,
+1287 .py, adaptive SD, BEG-MAB, tree drafting, n-gram),
+\texttt{examples/} (\texttt{bench\_sd.sh}, \texttt{grpo\_7B.sh},
+\texttt{grpo\_32B\_multi\_nodes.sh}). Adaptive-SD work tracks SGLang PR
+\#4732 (paper ref {[}59{]}). Released drafters:
+\texttt{mit-han-lab/Qwen2.5-7B-Eagle-RL}, \texttt{-32B-Eagle-RL}
+{[}Code: bench\_sd.sh:2; grpo\_*.sh{]}.
+
+Reproduced run configs. 7B: TP=4, FSDP2, Ulysses SP=4, GRPO n=8, batch
+64 prompts/mini 4, max-gen 32K, temp 0.9, KL
+\texttt{low\_var\_kl}/0.001, \texttt{speculative.bs\_threshold=32}, 8
+GPUs/1 node {[}Code: grpo\_7B.sh{]}. 32B: TP=8, SP=8, 8 nodes × 8 GPUs =
+64, max-prompt 2048 {[}Code: grpo\_32B\_multi\_nodes.sh{]}, consistent
+with the Tbl 3 8-node / 2.12× and OOM rows.
+
+Key reproducibility caveat (the most important finding). The online
+``drafter trained for free during RL'' pipeline is off by default in the
+shipped config: \texttt{enable\_drafter\_training=false} and
+\texttt{collect\_hidden\_states\_from\_sgl=false} {[}Code:
+fastrl\_trainer.yaml:19,26{]}. The example scripts demonstrate adaptive
+SD with a pre-trained \texttt{*-Eagle-RL} drafter; reproducing the
+headline ``free byproduct'' claim requires enabling these flags. The
+machinery (\texttt{EagleBackgroundTrainer} + coordinator + DataBuffer)
+is fully present and wired.
+
+Reception \& follow-on work (search-sourced, June 2026, post-cutoff).
+TLT was covered by MIT News, \emph{``New method could increase LLM
+training efficiency''} (2026-02-26), syndicated across MIT EECS /
+Schwarzman College / Climate Portal and Mirage News; the article frames
+the speedup in popular-press terms (\textasciitilde70--210\%), a loose
+rendering of the paper's precise 1.7--2.1×, not adopted here.
+Near-simultaneous concurrent work, \emph{``Beat the long tail:
+Distribution-Aware Speculative Decoding for RL Training''}
+(arXiv:2511.13841), addresses the same problem from a distribution-aware
+angle; it is concurrent, not a TLT result.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{9. Threats to Validity / Assumptions
+Ledger}\label{threats-to-validity-assumptions-ledger}
+
+Dashboard assumptions (modeled, not paper-validated): 1. Pareto tail
+(§3.2), paper Fig 1a is empirical/log-normal; the closed form is for
+tractability. The dashboard's ``5.7× vs median'' is numerically wrong
+(true ≈14×, §3.2). 2. Uniform per-token accept rate α (§5.1),
+contradicted by Fig 16 (α decays with depth); the Markov model is
+qualitative. 3. Exponential benefit decay, τ=16 (§5.3), a fit, not in
+the paper; the deployed rule is a hard \texttt{≤32} step with 10-check
+warmup. 4. Fisher information ≈ constant; local α≈e\^{}(−D\_KL) (§5.4),
+convergence framing only. Plus the dashboard's §3 batch numbers (``1.08×
+at BS=32'') are inconsistent with Tbl 4 and are not used.
+
+Schematic / approximate figures: \texttt{fig1\_longtail\_*} and
+\texttt{fig16\_*} are SCHEMATIC (only stated anchors are real);
+\texttt{fig13} interior cells and \texttt{fig11} Open-R1 bars are
+figure-read/approximate; \texttt{dashboard\_*} surfaces are modeled, not
+measured (figures/manifest.md).
+
+Code vs paper divergences (within-CONFIRMED): worker states are 5 not 3
+(§4.2); ``frozen LM head'' is EAGLE-only, not EAGLE-3 (§4.4); DataBuffer
+uses random sampling rather than explicit long-sequence prioritization
+(§4.1); the 9.2× checkpoint figure is an end-to-end measurement, not a
+parameter ratio (§4.3).
+
+Scope of the speedup claims: all speedups are per-step token throughput
+(or per-decode SD speedup), measured at matched reward curves {[}Paper
+Fig 12{]}, not wall-clock-to-convergence or accuracy gains.
+GPU-diversity numbers are a BS=1/TP=1 micro-benchmark. End-to-end gains
+are workload-dependent: they grow with tail severity, model size, and
+cluster size, and shrink when tails are short. The drafter is ``adequate
+for SD speedup,'' not claimed SOTA as a standalone model; the BEG-MAB
+carries ε=0.1 exploration overhead and assumes near-stationarity within
+its 1000-step window.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{10. Related Work}\label{related-work}
+
+The paper situates TLT against systems that relax synchronization
+differently, and it is worth keeping the categories distinct (Phase 2
+reconciliation):
+
+\begin{itemize}
+\tightlist
+\item
+  Off-policy / staleness-tolerant: AReaL (large-scale asynchronous RL)
+  {[}arXiv:2505.24298{]} and APRIL (active partial rollouts that
+  over-provision then recycle incomplete rollouts across steps)
+  {[}arXiv:2509.18521{]} mix or carry over policy versions.
+\item
+  Disaggregation: StreamRL (disaggregated streaming generation)
+  {[}arXiv:2504.15930{]}.
+\item
+  Synchronous long-tail scheduling: RollPacker (tail batching into
+  long/short rounds) is itself synchronous {[}arXiv:2509.21009{]}, it is
+  a scheduling method, \emph{not} an async-RL system; the paper notes
+  its tail batching is limited because trajectories for identical
+  queries vary widely in length {[}Paper §8{]}.
+\end{itemize}
+
+These accelerate training but (for the off-policy cases) risk degrading
+quality by admitting stale responses or truncating rollouts. TLT's
+differentiator is that it preserves the original RL algorithm and is
+\emph{orthogonal}, it can layer on top of limited-async RL rather than
+compete with it {[}Paper §7, §8{]}. The same overlap discipline
+generalizes across RL algorithms: GRPO, RLOO, DAPO, REINFORCE,
+REINFORCE++ share the workflow TLT accelerates {[}Paper §7{]}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{11. Conclusion}\label{conclusion}
+
+Future directions: extensions and open problems. The companion dashboard
+proposes three forward-looking variants, design sketches \emph{not}
+evaluated by the paper, inheriting the §5 assumptions.
+
+The dashboard proposes three forward-looking variants, {[}Dashboard §5 /
+Author synthesis{]}, design sketches \emph{not} evaluated by the paper,
+inheriting the §5 assumptions.
+
+A. Variance-aware thresholding. \(k^*(t)=k_0(1+\lambda\,V(t)/V(0))\),
+\(V(t)=\mathrm{Var}(L_i\mid L_i>t)\) {[}Dashboard §5A{]}.
+\emph{Rationale {[}Author synthesis{]}:} a high-variance residual tail
+warrants enabling SD earlier, generalizing the static ``\textless32''
+rule into a workload-adaptive one.
+
+B. Multi-drafter ensembling.
+\(\mathbb{E}[n_j]=\frac{1-\alpha_j^{\gamma+1}}{1-\alpha_j}\),
+\(\mathbb{E}[n_{\text{ens}}]=\sum_{j} w_j\mathbb{E}[n_j]\),
+\(w_j=|B_j|/B\) {[}Dashboard §5B{]}. \emph{Rationale:} different batch
+regimes have different accept profiles; a weighted ensemble could
+dominate any single drafter, at the memory cost Bucketed CUDAGraph
+(§4.5) is built to contain.
+
+C. Curriculum-ordered rollouts.
+\(\sigma^*=\mathrm{argsort}_i(-\hat L_i/c_i(s))\), \(c_i\) = drafter
+confidence {[}Dashboard §5C{]}. \emph{Rationale:} starting the
+likely-longest, hardest-to-draft sequences first could shorten the
+critical path.
+
+Open problems {[}Dashboard §6{]}. (1) sample complexity of online
+distillation vs the policy drift rate (the quantitative §5.4 condition);
+(2) optimal depth/verify under \emph{non-uniform} accept
+(\(\alpha_k=\alpha_1\beta^{k-1}\), relaxing §5.1); (3) a learnable
+threshold trained by a secondary RL loop (replacing fixed
+τ/``\textless32''); (4) cross-task drafter transfer bounds. The paper
+independently notes compatible regimes, uniformly-long responses,
+multi-turn tool-calling RL, fixed-target serving/edge deployment
+{[}Paper §7{]}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+Concluding remarks. TLT's lesson is methodological as much as empirical:
+the long-tail tax in reasoning RL is best paid back by overlapping
+concurrent work in time, not by approximating the algorithm. By training
+a one-layer drafter opportunistically on idle GPUs (non-blocking Spot
+Trainer + DataBuffer), harvesting bubbles with a preemptible
+coordinator, hiding checkpoint I/O (9.2×) and padding waste (2.2×), and
+switching on token-level-lossless speculative decoding only in the
+memory-bound tail (2.44× in the case study, peak 3.66× per-decode), TLT
+delivers \textgreater1.7× end-to-end (1.7--2.1× over VeRL; geomean
+1.86×/1.70× on H100/A100; peak 2.12×) {[}Paper Abstract, Fig 11, Tbl
+3{]} while leaving reward curves indistinguishable from the synchronous
+baseline {[}Paper Fig 12{]}. The mathematical model explains the
+magnitude and saturation of these gains \emph{qualitatively}, with the
+caveats that those closed forms are the dashboard author's
+assumption-based scaffolding (one of which, the 5.7× Pareto example, is
+numerically wrong) and that the released code refines several paper
+details (5-state machine, EAGLE-only frozen LM head, online-training off
+by default). The standing result: async-style utilization and
+synchronous-grade correctness are not mutually exclusive, a design point
+the fully-asynchronous RL literature has yet to occupy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection*{Acknowledgements}\label{acknowledgements}
+\addcontentsline{toc}{subsection}{Acknowledgements}
+
+This is an independent analysis. We gratefully acknowledge Hu, Yang,
+Guo, Yao, Lin, Gu, Cai, Gan, Klimovic, and Han for the TLT/FastRL work
+(ASPLOS '26, arXiv:2511.16665v2, CC-BY-4.0) and the released
+\texttt{mit-han-lab/fastrl} code (Apache-2.0); all original empirical
+results are theirs. Analytical models are adapted from the interactive
+companion dashboard by Eric Hibbs.
+
+\subsection*{Figures}\label{figures}
+\addcontentsline{toc}{subsection}{Figures}
+
+All figures are regenerated by \texttt{make\_figures.py} (vector
+\texttt{.pdf}+\texttt{.svg}, colorblind-safe); provenance and
+exact-vs-schematic status are in \texttt{figures/manifest.md}.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={End-to-end RL training speedup vs VeRL=1.0, H100 + A100. {[}Paper Fig 11{]} (TLT/TLT-Base/VeRL exact; Open-R1 bars figure-read/approximate; some A100 Open-R1 cells illegible → n/a).}]{figures/fig11_endtoend_speedup.pdf}
+\caption{End-to-end RL training speedup vs VeRL=1.0, H100 + A100.
+{[}Paper Fig 11{]} (TLT/TLT-Base/VeRL exact; Open-R1 bars
+figure-read/approximate; some A100 Open-R1 cells illegible → n/a).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={SD speedup vs Tokens\_to\_Verify across batch sizes; the collapse to 1.70× motivates the elastic threshold. {[}Paper Tbl 4{]} (exact).}]{figures/tbl4_batch_erosion.pdf}
+\caption{SD speedup vs Tokens\_to\_Verify across batch sizes; the
+collapse to 1.70× motivates the elastic threshold. {[}Paper Tbl 4{]}
+(exact).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Rollout SD speedup across GPUs (BS=1, TP=1 micro-benchmark). {[}Paper Tbl 2{]} (exact).}]{figures/tbl2_gpu_diversity.pdf}
+\caption{Rollout SD speedup across GPUs (BS=1, TP=1 micro-benchmark).
+{[}Paper Tbl 2{]} (exact).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={End-to-end speedup vs cluster size; 32B OOM at 1--2 nodes. {[}Paper Tbl 3{]} (exact).}]{figures/tbl3_cluster_scaling.pdf}
+\caption{End-to-end speedup vs cluster size; 32B OOM at 1--2 nodes.
+{[}Paper Tbl 3{]} (exact).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Selective async checkpointing (893→280→97 ms, 9.2×) and sequence packing (13.3→29.6 samples/s, 2.2×). {[}Paper Fig 17{]} (exact).}]{figures/fig17_spot_trainer.pdf}
+\caption{Selective async checkpointing (893→280→97 ms, 9.2×) and
+sequence packing (13.3→29.6 samples/s, 2.2×). {[}Paper Fig 17{]}
+(exact).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Accept length Target-Base→Target-R (+42\% RL). {[}Paper Tbl 6{]} (exact).}]{figures/tbl6_adaptive_drafter.pdf}
+\caption{Accept length Target-Base→Target-R (+42\% RL). {[}Paper Tbl
+6{]} (exact).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Depth×Verify grids for accept length and speedup; boxed extrema (9.78, 3.66×) verified. {[}Paper Fig 13{]} (boxed extrema exact; interior cells figure-read/approximate).}]{figures/fig13_sd_grid_heatmaps.pdf}
+\caption{Depth×Verify grids for accept length and speedup; boxed extrema
+(9.78, 3.66×) verified. {[}Paper Fig 13{]} (boxed extrema exact;
+interior cells figure-read/approximate).}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Accept rate vs draft-token index, adaptive vs vanilla. {[}Paper Fig 16, SCHEMATIC; endpoints 32\%/6\% from Dashboard{]}.}]{figures/fig16_accept_decay_SCHEMATIC.pdf}
+\caption{Accept rate vs draft-token index, adaptive vs vanilla. {[}Paper
+Fig 16, SCHEMATIC; endpoints \textsubscript{32\%/}6\% from
+Dashboard{]}.}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Modeled SD speedup over (α, γ). {[}Dashboard §2, assumption-based (uniform α); NOT measured{]}.}]{figures/dashboard_markov_surface.pdf}
+\caption{Modeled SD speedup over (α, γ). {[}Dashboard §2,
+assumption-based (uniform α); NOT measured{]}.}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Aggregate SD benefit k·b(k), peak at k=τ=16. {[}Dashboard §3, assumption-based; NOT measured{]}.}]{figures/dashboard_threshold_curve.pdf}
+\caption{Aggregate SD benefit k·b(k), peak at k=τ=16. {[}Dashboard §3,
+assumption-based; NOT measured{]}.}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={Long-tail length distribution + under-utilized zone. {[}Paper Fig 1a/Fig 2, SCHEMATIC, not to scale; raw data not published as numbers{]}.}]{figures/fig1_longtail_SCHEMATIC.pdf}
+\caption{Long-tail length distribution + under-utilized zone. {[}Paper
+Fig 1a/Fig 2, SCHEMATIC, not to scale; raw data not published as
+numbers{]}.}
+\end{figure}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection*{References}\label{references}
+\addcontentsline{toc}{subsection}{References}
+
+\emph{Primary and secondary sources, then external works actually cited.
+External bibliographic details follow the TLT paper's reference list;
+arXiv/venue strings verified in Phase 5
+(\texttt{phase5\_citations.md}).}
+
+{[}Primary, Paper{]} Q. Hu, S. Yang, J. Guo, X. Yao, Y. Lin, Y. Gu, H.
+Cai, C. Gan, A. Klimovic, S. Han. \emph{Taming the Long-Tail: Efficient
+Reasoning RL Training with Adaptive Drafter.} ASPLOS '26, Pittsburgh,
+PA, Mar 22--26 2026. arXiv:2511.16665v2 (21 Jan 2026). DOI
+10.1145/3779212.3790231. Code (Apache-2.0):
+github.com/mit-han-lab/fastrl.
+
+{[}Secondary, Dashboard{]} E. Hibbs. \emph{Taming the Long-Tail, an
+interactive companion} (``Model Math'' §1--6).
+https://erichibbsgh.github.io/Taming-the-Long-Tail-an-interactive./
+(accessed 2026-06-05).
+
+{[}Code artifact{]} \texttt{mit-han-lab/fastrl}, Apache-2.0,
+\texttt{main} @ commit \texttt{bce3df7}; HF drafters
+\texttt{mit-han-lab/Qwen2.5-\{7B,32B\}-Eagle-RL}.
+
+External works cited: - Z. Shao et al.~\emph{DeepSeekMath} (GRPO).
+arXiv:2402.03300, 2024. - DeepSeek-AI et al.~\emph{DeepSeek-R1.}
+arXiv:2501.12948, 2025. - Y. Leviathan, M. Kalman, Y. Matias. \emph{Fast
+Inference from Transformers via Speculative Decoding.} ICML 2023. - C.
+Chen et al.~\emph{Accelerating LLM Decoding with Speculative Sampling.}
+arXiv:2302.01318, 2023. - Y. Li, F. Wei, C. Zhang, H. Zhang.
+\emph{EAGLE.} ICML 2024. · \emph{EAGLE-2.} EMNLP 2024. · \emph{EAGLE-3.}
+arXiv:2503.01840, 2025. - L. Zhang, X. Wang, Y. Huang, R. Xu.
+\emph{HASS: Learning Harmonized Representations for Speculative
+Sampling.} ICLR 2025. - T. Cai et al.~\emph{Medusa.} arXiv:2401.10774,
+2024. · Z. Ankner et al.~\emph{Hydra.} COLM 2024. - X. Miao et
+al.~\emph{SpecInfer.} ASPLOS 2024. - X. Liu et al.~\emph{Online
+Speculative Decoding (OSD).} ICML 2024. - G. Sheng et
+al.~\emph{HybridFlow (VeRL).} EuroSys 2025. - Hugging Face.
+\emph{Open-R1.} 2025. - W. Fu et al.~\emph{AReaL: A Large-Scale
+Asynchronous RL System for Language Reasoning.} arXiv:2505.24298, 2025.
+- Y. Zhong et al.~\emph{StreamRL.} arXiv:2504.15930, 2025. - Y. Zhou et
+al.~\emph{APRIL: Active Partial Rollouts in RL to Tame Long-tail
+Generation.} arXiv:2509.18521, 2025. - W. Gao et al.~\emph{RollPacker:
+Mitigating Long-Tail Rollouts for Fast, Synchronous RL Post-Training.}
+arXiv:2509.21009, 2025. - Y. Zhong et al.~\emph{RLHFuse (Optimizing RLHF
+with Stage Fusion).} NSDI 2025. - Z. Mei et al.~\emph{ReaLHF.}
+arXiv:2406.14088, 2024. - L. Zheng et al.~\emph{SGLang.} NeurIPS 2024. ·
+P. Moritz et al.~\emph{Ray.} OSDI 2018. · P. Hintjens. \emph{ZeroMQ.}
+O'Reilly, 2013. - PyTorch Team. \emph{FSDP2}; \emph{Torch Distributed
+Checkpoint.} 2025. - M. M. Krell et al.~\emph{Efficient Sequence
+Packing.} arXiv:2107.02027, 2022. - Y. Zhao et al.~\emph{Lookahead.} KDD
+2024. - Qwen et al.~\emph{Qwen2.5 Technical Report.} arXiv:2412.15115,
+2025. - G. Cui et al.~\emph{Eurus-2-RL / Process Reinforcement through
+Implicit Rewards.} arXiv:2502.01456, 2025. - OpenThoughts.
+\emph{OpenThoughts2-1M.} 2025. · L. Zheng et al.~\emph{MT-Bench.} 2023.
+- Q. Yu et al.~\emph{DAPO.} arXiv:2503.14476, 2025. · A. Ahmadian et
+al.~\emph{RLOO (Back to Basics).} ACL 2024. · J. Hu et
+al.~\emph{REINFORCE++.} arXiv:2501.03262, 2025. - D. Kingma, J. Ba.
+\emph{Adam.} ICLR 2015. · ByteDance. \emph{W\&B trace of DAPO
+Reproduction on verl.} 2025.
+
+Concurrent / reception (search-sourced, post-cutoff, dated): - MIT News.
+\emph{New method could increase LLM training efficiency.}
+news.mit.edu/2026/\ldots-0226 (2026-02-26). - \emph{Beat the long tail:
+Distribution-Aware Speculative Decoding for RL Training.}
+arXiv:2511.13841, 2025 (concurrent work).
+
+\subsubsection{BibTeX for the primary
+paper}\label{bibtex-for-the-primary-paper}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\VariableTok{@inproceedings}\NormalTok{\{}\OtherTok{hu2026tlt}\NormalTok{,}
+  \DataTypeTok{title}\NormalTok{     = \{Taming the Long{-}Tail: Efficient Reasoning RL Training with Adaptive Drafter\},}
+  \DataTypeTok{author}\NormalTok{    = \{Hu, Qinghao and Yang, Shang and Guo, Junxian and Yao, Xiaozhe and}
+\NormalTok{               Lin, Yujun and Gu, Yuxian and Cai, Han and Gan, Chuang and}
+\NormalTok{               Klimovic, Ana and Han, Song\},}
+  \DataTypeTok{booktitle}\NormalTok{ = \{Proceedings of the 31st ACM International Conference on Architectural}
+\NormalTok{               Support for Programming Languages and Operating Systems, Volume 2 (ASPLOS \textquotesingle{}26)\},}
+  \DataTypeTok{year}\NormalTok{      = \{2026\},}
+  \DataTypeTok{doi}\NormalTok{       = \{10.1145/3779212.3790231\},}
+  \DataTypeTok{note}\NormalTok{      = \{arXiv:2511.16665v2\}}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\emph{(The repo README's BibTeX reads ``31th'', corrected here to
+``31st''; its News-line link text uses a non-canonical title, the title
+above is the canonical PDF title.)}
+
+\end{document}
