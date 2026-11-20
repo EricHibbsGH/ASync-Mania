@@ -1,0 +1,23 @@
+python 3.12.10  torch 2.15.0+cpu  transformers 4.57.1
+drafter class: C:/Users/bojo1/AppData/Local/Temp/claude/b802934d2d74336f/147213dc-6e13-4224-847c-9956f829b54b/scratchpad/fastrl\verl\workers\drafter\model\qwen2_eagle.py
+tolerance: 1e-05
+
+== AS DEPLOYED: actor loaded with flash_attention_2 -> drafter swaps to eager
+   attention backend in use: eager;  mask path: fastrl fallback (torch.triu boolean mask, qwen2_eagle.py:98-114)
+   C0 control, identical inputs          max|diff| = 0.000e+00  -> deterministic
+   C1 change last token, earlier outputs max|diff| = 9.554e-02  -> NOT CAUSAL: earlier positions see a later token
+   C2 B packed after A vs. B alone       max|diff| = 1.152e-01  -> cross-sample effect
+   C2' A packed before B vs. A alone      max|diff| = 1.622e-01  -> earlier sample sees the LATER sample
+   C3 C2 with positions reset            max|diff| = 1.123e-01  -> attention crosses the sample boundary
+
+== COMPARISON: default sdpa backend
+   attention backend in use: sdpa;  mask path: fastrl fallback (torch.triu boolean mask, qwen2_eagle.py:98-114)
+   C0 control, identical inputs          max|diff| = 0.000e+00  -> deterministic
+   C1 change last token, earlier outputs max|diff| = 4.322e-01  -> NOT CAUSAL: earlier positions see a later token
+   C2 B packed after A vs. B alone       max|diff| = 4.172e-07  -> no cross-sample effect
+   C2' A packed before B vs. A alone      max|diff| = 4.471e-01  -> earlier sample sees the LATER sample
+   C3 C2 with positions reset            max|diff| = 4.172e-07  -> explained by positions only
+
+== POSITIVE CONTROL: stock transformers Qwen2ForCausalLM (eager)
+   C1 change last token, earlier outputs max|diff| = 0.000e+00  -> causal (harness can detect a correct mask)
+

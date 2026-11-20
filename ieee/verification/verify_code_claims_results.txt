@@ -1,0 +1,45 @@
+fastrl checkout: C:/Users/bojo1/AppData/Local/Temp/claude/b802934d2d74336f/147213dc-6e13-4224-847c-9956f829b54b/scratchpad/fastrl  HEAD=bce3df7  (paper cites bce3df7)
+
+PASS  online drafter training off by default         verl/trainer/config/fastrl_trainer.yaml:19-19
+PASS  hidden-state collection off by default         verl/trainer/config/fastrl_trainer.yaml:26-26
+PASS  SD batch threshold default 32                  verl/trainer/config/fastrl_trainer.yaml:9-9
+PASS  drafter trained every 10 RL steps              verl/trainer/config/fastrl_trainer.yaml:20-20
+PASS  one released worker suffices to start training verl/trainer/config/fastrl_trainer.yaml:25-25
+PASS  BEG-MAB bucket boundaries                      verl/trainer/config/fastrl_trainer.yaml:17-17
+PASS  five-state worker machine: RELEASED            verl/workers/rollout/sglang_rollout/worker_manager.py:54-61
+PASS  five-state worker machine: COMPLETED           verl/workers/rollout/sglang_rollout/worker_manager.py:54-61
+PASS  collection gated on drafter training           verl/workers/rollout/sglang_rollout/worker_manager.py:489-493
+PASS  one-step-offset collection                     verl/workers/rollout/sglang_rollout/worker_manager.py:489-493
+PASS  STOP_TRAINING message                          verl/workers/rollout/sglang_rollout/worker_manager.py:78-79
+PASS  Spot Trainer class                             verl/workers/drafter/eagle_background_trainer.py:35-35
+PASS  Smooth-L1 hidden-state loss                    verl/workers/drafter/eagle_background_trainer.py:73-73
+PASS  frozen params excluded from checkpoint         verl/workers/drafter/eagle_background_trainer.py:83-83
+PASS  asynchronous DCP checkpoint                    verl/workers/drafter/eagle_background_trainer.py:119-148
+PASS  buffer draws from last 2 RL steps              verl/workers/drafter/eagle_background_trainer.py:276-276
+PASS  uniform random sampling from buffer            verl/workers/drafter/eagle_background_trainer.py:299-304
+PASS  packing: concatenation without padding         verl/workers/drafter/eagle_background_trainer.py:410-417
+PASS  packing: all-ones attention mask               verl/workers/drafter/eagle_background_trainer.py:410-417
+PASS  training step skipped without hidden states    verl/workers/drafter/eagle_background_trainer.py:473-479
+PASS  drafter forward call                           verl/workers/drafter/eagle_background_trainer.py:504-509
+PASS  drafter positions default to arange            verl/workers/drafter/model/qwen2_eagle.py:88-89
+PASS  FlashAttention-2 replaced by eager             verl/workers/drafter/model/qwen2_eagle.py:193-197
+PASS  single-layer drafter                           eagle-train/eagle_trainer.py:190-190
+PASS  frozen embedding / LM head (EAGLE)             eagle-train/eagle_trainer.py:256-258
+PASS  EAGLE-3 LM head trainable                      eagle-train/eagle3_trainer.py:473-476
+PASS  SD warm-up hysteresis = 10 checks              third-party/sglang/python/sglang/srt/speculative/eagle_worker.py:196-196
+PASS  SD enabled after consecutive checks            third-party/sglang/python/sglang/srt/speculative/eagle_worker.py:364-364
+PASS  BEG-MAB reward                                 third-party/sglang/python/sglang/srt/speculative/eagle_worker.py:1234-1240
+PASS  tree drafting forward                          third-party/sglang/python/sglang/srt/speculative/eagle_worker.py:748-748
+PASS  BEG-MAB class                                  third-party/sglang/python/sglang/srt/speculative/eagle_mab.py:197-197
+PASS  BEG-MAB epsilon 0.1                            third-party/sglang/python/sglang/srt/speculative/eagle_mab.py:210-210
+PASS  sliding window 1000                            third-party/sglang/python/sglang/srt/speculative/eagle_mab.py:111-111
+PASS  OOM guard draft_tokens x batch <= 2048         third-party/sglang/python/sglang/srt/speculative/eagle_mab.py:442-442
+PASS  n-gram match window 12                         third-party/sglang/python/sglang/srt/server_args.py:342-342
+PASS  n-gram branch length 18                        third-party/sglang/python/sglang/srt/server_args.py:346-346
+PASS  bucketed CUDA-graph batch sizes                third-party/sglang/python/sglang/srt/server_args.py:789-796
+PASS  GRPO n=8 (7B script)                           examples/grpo_7B.sh:15-15
+PASS  KL as loss, low_var_kl                         examples/grpo_7B.sh:53-53
+PASS  KL coefficient 0.001                           examples/grpo_7B.sh:52-52
+PASS  32B run uses 8 nodes                           examples/grpo_32B_multi_nodes.sh:5-5
+
+41/41 code claims verified
