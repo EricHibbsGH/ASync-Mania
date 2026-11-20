@@ -215,7 +215,7 @@ useful compute while keeping training token-level lossless and strictly
 on-policy. The paper reports ``over 1.7×'' end-to-end speedup over
 state-of-the-art systems {[}Paper Abstract{]}, with the figure-level
 range given as 1.7--2.1× over VeRL {[}Paper Fig 11{]}, a geomean of
-1.86× on H100 and 1.70× on A100, and a peak of 2.12× on Qwen-32B/H100
+1.86× on H100 and 1.79× on A100, and a peak of 2.12× on Qwen-32B/H100
 {[}Paper Fig 11, Tbl 3{]}. Rollout alone is ≈85\% of step time {[}Paper
 §1, Fig 1a{]}. This paper frames TLT around its
 \emph{asynchrony/concurrency} mechanisms, non-blocking drafter training,
@@ -820,7 +820,7 @@ Source
 \endlastfoot
 End-to-end vs VeRL (headline) & over SOTA & \textgreater1.7× (abstract)
 / 1.7--2.1× (figure) & {[}Paper Abstract; Fig 11{]} \\
-End-to-end geomean & H100 / A100 & 1.86× / 1.70× & {[}Paper Fig 11{]} \\
+End-to-end geomean & H100 / A100 & 1.86× / 1.79× & {[}Paper Fig 11{]} \\
 End-to-end peak & Qwen-32B, H100, 8 nodes & 2.12× & {[}Paper Fig 11; Tbl
 3{]} \\
 TLT vs VeRL, H100 & Qwen-7B / DS-7B / Qwen-32B / Llama-70B & 1.76 / 1.71
@@ -989,7 +989,7 @@ at BS=32'') are inconsistent with Tbl 4 and are not used.
 
 Schematic / approximate figures: \texttt{fig1\_longtail\_*} and
 \texttt{fig16\_*} are SCHEMATIC (only stated anchors are real);
-\texttt{fig13} interior cells and \texttt{fig11} Open-R1 bars are
+\texttt{fig13} interior cells are
 figure-read/approximate; \texttt{dashboard\_*} surfaces are modeled, not
 measured (figures/manifest.md).
 
@@ -1096,7 +1096,7 @@ coordinator, hiding checkpoint I/O (9.2×) and padding waste (2.2×), and
 switching on token-level-lossless speculative decoding only in the
 memory-bound tail (2.44× in the case study, peak 3.66× per-decode), TLT
 delivers \textgreater1.7× end-to-end (1.7--2.1× over VeRL; geomean
-1.86×/1.70× on H100/A100; peak 2.12×) {[}Paper Abstract, Fig 11, Tbl
+1.86×/1.79× on H100/A100; peak 2.12×) {[}Paper Abstract, Fig 11, Tbl
 3{]} while leaving reward curves indistinguishable from the synchronous
 baseline {[}Paper Fig 12{]}. The mathematical model explains the
 magnitude and saturation of these gains \emph{qualitatively}, with the
@@ -1129,10 +1129,10 @@ exact-vs-schematic status are in \texttt{figures/manifest.md}.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={End-to-end RL training speedup vs VeRL=1.0, H100 + A100. {[}Paper Fig 11{]} (TLT/TLT-Base/VeRL exact; Open-R1 bars figure-read/approximate; some A100 Open-R1 cells illegible → n/a).}]{figures/fig11_endtoend_speedup.pdf}
+\includegraphics[width=0.92\linewidth,height=\textheight,keepaspectratio,alt={End-to-end RL training speedup vs VeRL=1.0, H100 + A100. {[}Paper Fig 11{]} (all values are printed bar labels; Open-R1 reports no Llama-70B result → n/r).}]{figures/fig11_endtoend_speedup.pdf}
 \caption{End-to-end RL training speedup vs VeRL=1.0, H100 + A100.
-{[}Paper Fig 11{]} (TLT/TLT-Base/VeRL exact; Open-R1 bars
-figure-read/approximate; some A100 Open-R1 cells illegible → n/a).}
+{[}Paper Fig 11{]} (all values are printed bar labels; Open-R1
+reports no Llama-70B result → n/r).}
 \end{figure}
 
 \begin{figure}

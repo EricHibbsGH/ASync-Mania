@@ -1,0 +1,435 @@
+%% =====================================================================
+%% Overlapping, Not Approximating -- IEEE conference version (IEEEtran)
+%% Build:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+%% Figures: python make_figures_ieee.py  (writes figures/*.pdf)
+%% Items requiring author confirmation before submission are listed in
+%% REVIEW_REPORT.md (Section 2).
+%% =====================================================================
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{patterns,arrows.meta}
+\usepackage[hyphens]{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\brkus}{\textunderscore\allowbreak}
+\newcommand{\code}[1]{{\small\ttfamily\let\_\brkus\hyphenchar\font=-1 #1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\x}{\ensuremath{\times}}
+
+\begin{document}
+
+\title{Overlapping, Not Approximating: A Code-Grounded Systems Analysis of Lossless Long-Tail Acceleration in Reasoning-RL Training}
+
+\author{\IEEEauthorblockN{Eric Hibbs}
+\IEEEauthorblockA{Independent Researcher\\
+ericbhibbs@gmail.com}}
+
+\maketitle
+
+\begin{abstract}
+Reinforcement-learning (RL) post-training of reasoning large language models (LLMs) is bottlenecked by rollout generation, which accounts for roughly 85\% of step time in published measurements and is governed by a few very long responses. TLT (ASPLOS~'26) reports 1.7--2.1\x{} end-to-end speedups over the VeRL framework without changing the RL algorithm, by overlapping otherwise-idle GPU time with drafter training and enabling speculative decoding only in the long tail. This paper presents an independent, code-grounded systems analysis of how those gains arise. We (i)~trace eleven claimed mechanisms to specific locations in the released source code and identify five points where the implementation refines or departs from the published description, most consequentially that online drafter training is disabled in the shipped configuration; (ii)~re-verify every reported quantity against the original publication and consolidate the evidence with its experimental conditions; (iii)~assemble an assumption-explicit analytical model (order statistics for the long tail, a truncated-geometric model of speculative decoding, an activation-threshold model, and an Amdahl bound) showing that the measured end-to-end gains imply a 1.9--2.6\x{} rollout-phase acceleration, consistent with directly measured rollout speedups; and (iv)~separate TLT's systems-level overlap from the algorithmic asynchrony of off-policy RL systems. We distill the findings into deployment guidance covering when the approach pays off, its memory cost, the configuration changes required, and the metrics that confirm training remains lossless. All analysis artifacts are publicly released.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Reinforcement learning, large language models, speculative decoding, distributed training systems, GPU utilization, reproducibility.
+\end{IEEEkeywords}
+
+%% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+RL with verifiable rewards has become the standard route to strong reasoning in LLMs~\cite{shao2024deepseekmath,deepseekr1}, and its cost is dominated by \emph{rollout}: autoregressive generation of many candidate responses per prompt. In the measurements of Hu~\emph{et~al.}, rollout consumes approximately 85\% of total RL step time~\cite[Sec.~1, Fig.~1a]{hu2026tlt}. Rollout latency is set by the \emph{slowest} response in the batch, and response lengths are heavy-tailed: most finish early while a few approach the configured maximum. A production trace from ByteDance quantifies the cost: training Qwen2.5-32B on 128 H20 GPUs took 11~days for only 385 RL steps, averaging approximately 40~min per step, with the gap between the maximum and the 75th-percentile response length forming a persistent ``under-utilized zone'' throughout the run~\cite[Sec.~1, Fig.~2]{hu2026tlt}. That run alone represents $128 \times 11~\text{days} \times 24~\text{h} = 33{,}792$ GPU-hours. Similar long-tail behavior has been reported by several independent industrial and academic groups~\cite[Sec.~1]{hu2026tlt}.
+
+There are two broad ways to make a tail-bound workload faster. One is to \emph{approximate}: drop or truncate stragglers, accept stale gradients, or mix policy versions, as fully asynchronous RL systems do~\cite{fu2025areal,zhou2025april}. These approaches trade algorithmic fidelity for utilization. The other is to \emph{overlap}: keep the algorithm exact but fill the idle time the tail creates with useful, independent work. TLT~\cite{hu2026tlt} takes the second route. Its Adaptive Drafter is a lightweight draft model trained opportunistically on GPUs freed during the tail, and its Adaptive Rollout Engine enables speculative decoding (SD)~\cite{leviathan2023,chen2023} only when the residual batch is small enough to benefit. Because SD verification preserves the target model's sampling distribution, the speedup comes without changing what the policy learns.
+
+This paper is an independent analysis, not a new system. Its purpose is to make the TLT design \emph{auditable and adoptable}: to establish exactly which mechanisms produce which gains, whether the released code implements them as described, why the gains have the magnitude and saturation they do, and what an engineering team must do to obtain them. All empirical results analyzed here belong to the TLT authors~\cite{hu2026tlt}. Our contributions are:
+\begin{enumerate}
+\item \textbf{Code-grounded mechanism audit.} We map eleven mechanisms to file- and line-level locations in the released \code{fastrl} repository~\cite{fastrl} (commit \code{bce3df7}) and document five implementation--paper divergences, including that online drafter training ships disabled (Sec.~\ref{sec:audit}).
+\item \textbf{Verified, condition-annotated evidence base.} Every reported quantity is re-transcribed from the source, every derived ratio is recomputed, and each result is paired with its model, hardware, batch size, and decoding configuration (Sec.~\ref{sec:eval}).
+\item \textbf{Assumption-explicit performance model.} We consolidate closed-form models of the long tail, SD speedup, and activation threshold, state where each assumption is violated, correct a numerical error in a prior companion model, and add an Amdahl consistency check linking rollout-level and end-to-end measurements (Secs.~\ref{sec:tail} and~\ref{sec:model}).
+\item \textbf{A precise taxonomy of ``asynchronous'' RL acceleration} that distinguishes systems-level overlap (lossless) from algorithmic asynchrony (off-policy) (Sec.~\ref{sec:async}).
+\item \textbf{Deployment guidance} translating the evidence into adoption criteria, configuration changes, cost estimates, and monitoring metrics (Sec.~\ref{sec:practice}).
+\end{enumerate}
+
+%% =====================================================================
+\section{Background}
+\label{sec:background}
+
+\subsection{The Three Stages of a GRPO Step}
+TLT uses Group Relative Policy Optimization (GRPO)~\cite{shao2024deepseekmath}, which replaces the learned critic of PPO~\cite{schulman2017ppo} with a group-relative baseline. One step comprises three stages~\cite[Sec.~2.1, Fig.~4]{hu2026tlt}: (1)~\emph{rollout}, in which the policy generates several responses per prompt (eight in the released scripts); (2)~\emph{inference}, in which the policy and a frozen reference model prefill the responses to compute log-probabilities for a KL penalty, and a rule-based reward is computed; and (3)~\emph{training}, in which the policy weights are updated. In the released configuration the KL term is applied as a loss (\code{low\_var\_kl}, coefficient 0.001) rather than folded into the reward. Rollout is sequential, latency-bound, and tail-dominated; inference and training are batched and comparatively regular. TLT inserts its opportunistic work into the tail of stage~1 and reuses hidden states already produced in stage~2.
+
+\subsection{Speculative Decoding: Lossless and Memory-to-Compute}
+In SD, a small drafter proposes several tokens and the target model verifies them in one parallel forward pass, accepting the longest valid prefix plus one corrected token~\cite{leviathan2023,chen2023}. Two properties make SD a good fit for RL. First, it is \emph{token-level lossless}: the verification rule preserves the target's next-token sampling distribution, so rollouts are distributed identically to ordinary sampling from the target. This is a distributional guarantee on rollouts, not a statement about convergence. Second, it raises arithmetic intensity. At small batch sizes, autoregressive decoding is memory-bandwidth-bound because each step streams all weights to produce one token per sequence; verifying many draft tokens at once moves the workload toward the compute-bound regime. TLT's roofline analysis~\cite{williams2009roofline} shows SD reaching peak throughput at far smaller batch sizes than vanilla decoding~\cite[Sec.~2.2, Fig.~5c]{hu2026tlt}, so SD helps most exactly where the tail lives, with few requests still in flight.
+
+Naïve SD in RL faces three obstacles~\cite[Sec.~2.2]{hu2026tlt}: (C1)~the target model changes every step, so a fixed drafter goes stale; (C2)~training a drafter costs GPU time; and (C3)~the effective batch size fluctuates, and SD that helps at batch size~1 can hurt, or exhaust memory, at large batch sizes. The Adaptive Drafter addresses C1 and C2; the Adaptive Rollout Engine addresses C3.
+
+\subsection{Two Meanings of ``Asynchronous''}
+\label{sec:twoasync}
+The word is overloaded. In asynchronous RL systems such as AReaL~\cite{fu2025areal}, asynchrony is \emph{algorithmic}: the policy is updated from rollouts generated by earlier policy versions, so generation and training proceed concurrently but off-policy. In TLT, asynchrony is purely \emph{systems-level}. The policy update consumes only on-policy rollouts of the current version, and what runs concurrently is auxiliary work, namely drafter training and checkpoint I/O, neither of which enters the policy gradient. TLT states this as an explicit ``Lossless Guarantee'' design principle~\cite[Sec.~3]{hu2026tlt}. Consequently, every gain analyzed below must come from overlapping auxiliary work, never from desynchronizing the core update.
+
+%% =====================================================================
+\section{Analysis Methodology}
+\label{sec:method}
+
+\textbf{Sources.} We analyze three artifacts: the TLT paper (arXiv:2511.16665v2)~\cite{hu2026tlt}; the released \code{fastrl} code~\cite{fastrl} at commit \code{bce3df7}, which vendors a modified SGLang~\cite{zheng2024sglang} rollout engine; and the analytical ``Model Math'' sections of a companion interactive dashboard by the present author~\cite{hibbs2026dashboard}.
+
+\textbf{Provenance classes.} Every quantitative or mechanistic statement in this paper belongs to exactly one of four classes, and the class is stated where the statement appears.
+\emph{Measured} values are reported by Hu~\emph{et~al.} and cited as \cite[Fig./Table]{hu2026tlt}.
+\emph{Code-confirmed} statements were verified in the released source and cited by file path.
+\emph{Modeled} statements are assumption-based closed forms and are never presented as measurements.
+\emph{Derived} statements are arithmetic or reasoning added here from cited inputs.
+
+\textbf{Verification procedure.} (1)~All numbers were re-transcribed from the tables and labeled figure values of the arXiv~v2 PDF; values that can only be read approximately from unlabeled plot geometry are not used. (2)~Every ratio, percentage, and geometric mean was recomputed in Python. (3)~Each closed-form model was re-derived symbolically, and the order-statistic result was additionally checked by Monte~Carlo simulation ($2\times10^5$ batches). (4)~Each mechanism claim was traced to source code by reading the relevant classes, configuration files, and launch scripts. Scripts, the claim-by-claim audit trail, and figure-generation code are released~\cite{hibbs2026artifact}.
+
+%% =====================================================================
+\section{The Long Tail as an Order Statistic}
+\label{sec:tail}
+
+Let a batch hold $B$ responses with token lengths $L_1,\dots,L_B$ decoded at per-request throughputs $r_i$. The batch completes only when its slowest member does:
+\begin{equation}
+T_{\text{batch}} = \max_{i\le B} \frac{L_i}{r_i}.
+\label{eq:tbatch}
+\end{equation}
+The bottleneck is thus a maximum, a classical order statistic. To obtain intuition about how the straggler scales with batch size, the companion model~\cite{hibbs2026dashboard} assumes i.i.d.\ Pareto lengths, $P(L>x)=(x_{\min}/x)^{\alpha}$ with $\alpha>1$. This is a modeling assumption: TLT's measured length distribution is empirical and closer to log-normal in shape~\cite[Fig.~1a]{hu2026tlt}. Under the assumption, the exact expected maximum is
+\begin{equation}
+\begin{split}
+\mathbb{E}[M_B] &= x_{\min}\,\frac{\Gamma(B+1)\,\Gamma(1-1/\alpha)}{\Gamma(B+1-1/\alpha)}\\
+&\approx x_{\min}\,B^{1/\alpha}\,\Gamma(1-1/\alpha),
+\end{split}
+\label{eq:emax}
+\end{equation}
+where the approximation follows from $\Gamma(B+1)/\Gamma(B+1-1/\alpha)\sim B^{1/\alpha}$. The straggler therefore grows as $B^{1/\alpha}$: the heavier the tail, the faster the worst case grows with batch size, and the more capacity is freed while it runs.
+
+\textbf{Worked example and correction (derived).} For $\alpha=2$ and $B=128$, (\ref{eq:emax}) gives $\mathbb{E}[M_B]=20.07\,x_{\min}$, and Monte~Carlo simulation gives $20.14\,x_{\min}$. The Pareto median is $2^{1/\alpha}x_{\min}=1.414\,x_{\min}$, so the expected straggler is about $14.2\times$ the median response. The companion dashboard's closed form, which replaces $\Gamma(1-1/\alpha)=\sqrt{\pi}\approx1.77$ with the Pareto mean factor $\alpha/(\alpha-1)=2$, gives $22.63\,x_{\min}$ (16.0\x{} the median). Its stated worked ratio of ``$\approx5.7\times$'' equals $B^{1/\alpha}/\alpha=\sqrt{128}/2=5.66$, a normalization error, and is superseded by the value above.
+
+\textbf{Connection to measurement.} In practice the maximum is also truncated at the configured generation limit (20,480 tokens in the ByteDance trace; 32K tokens in TLT's experiments), and the measured maximum repeatedly reaches that cap~\cite[Fig.~2]{hu2026tlt}. The model and the trace agree on the qualitative point that matters for system design: under-utilization is structural rather than incidental. It persists across all 385 steps of the production run, which motivates \emph{harvesting} the bubble rather than merely shortening it.
+
+%% =====================================================================
+\section{System Design: How TLT Overlaps the Tail}
+\label{sec:design}
+
+Fig.~\ref{fig:timeline} contrasts a synchronous rollout with TLT's overlapped execution. Table~\ref{tab:mech} maps each mechanism to the cost it hides, its measured effect, and its location in the released code.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=0.80cm,y=0.42cm,font=\scriptsize]
+  % ---------- (a) synchronous baseline
+  \node[anchor=west] at (-0.9,9.0) {\textbf{(a) Synchronous rollout}};
+  \foreach \w/\e [count=\i] in {1/2.2,2/3.4,3/4.6,4/7.2}{
+    \pgfmathsetmacro{\yy}{8.6-\i*0.85}
+    \node[anchor=east] at (0,\yy+0.3) {W\w};
+    \fill[red!55!black!70] (0,\yy) rectangle (\e,\yy+0.6);
+    \ifnum\i<4 \fill[gray!25] (\e,\yy) rectangle (7.2,\yy+0.6); \fi
+  }
+  \fill[orange!60] (7.2,5.05) rectangle (8.4,8.35);
+  \node[rotate=90] at (7.8,6.7) {infer+train};
+  \node at (4.9,4.45) {\textcolor{gray!80!black}{grey: idle bubbles}};
+  % ---------- (b) TLT
+  \node[anchor=west] at (-0.9,3.6) {\textbf{(b) TLT: overlap, then speculate}};
+  \foreach \w/\e [count=\i] in {1/2.2,2/3.4,3/4.6,4/5.5}{
+    \pgfmathsetmacro{\yy}{3.2-\i*0.85}
+    \node[anchor=east] at (0,\yy+0.3) {W\w};
+    \fill[red!55!black!70] (0,\yy) rectangle (\e,\yy+0.6);
+    \ifnum\i<4 \fill[blue!45] (\e,\yy) rectangle (5.5,\yy+0.6); \fi
+  }
+  \draw[green!60!black,very thick] (4.0,-0.20) rectangle (5.5,0.40);
+  \fill[orange!60] (5.5,-0.20) rectangle (6.7,2.95);
+  \node[rotate=90] at (6.1,1.38) {infer+train};
+  \draw[{Latex[length=1.6mm]}-{Latex[length=1.6mm]},thick] (6.7,-0.75) -- (8.4,-0.75);
+  \node[anchor=north] at (7.55,-0.85) {step time saved};
+  % ---------- legend
+  \fill[red!55!black!70] (-0.6,-2.35) rectangle (-0.25,-2.0); \node[anchor=west] at (-0.2,-2.17) {rollout};
+  \fill[blue!45] (1.05,-2.35) rectangle (1.4,-2.0); \node[anchor=west] at (1.45,-2.17) {spot drafter training};
+  \draw[green!60!black,very thick] (4.25,-2.35) rectangle (4.6,-2.0); \node[anchor=west] at (4.65,-2.17) {SD active ($\le$32 req.)};
+\end{tikzpicture}
+\caption{Conceptual timeline of one RL step on four rollout workers (W1--W4); not to scale. (a)~Workers that finish early idle until the longest response completes. (b)~TLT trains the drafter on freed workers without blocking rollout and enables speculative decoding once few requests remain, shortening the tail. Adapted from the illustration in~\cite[Fig.~1b]{hu2026tlt}.}
+\label{fig:timeline}
+\end{figure}
+
+\begin{table*}[t]
+\centering
+\caption{TLT Mechanisms: What Each Overlaps or Hides, Measured Effect, and Code Location}
+\label{tab:mech}
+\footnotesize
+\begin{tabular}{@{}L{3.1cm}L{3.9cm}L{4.3cm}L{5.4cm}@{}}
+\toprule
+\textbf{Mechanism} & \textbf{Cost overlapped or hidden} & \textbf{Measured effect~\cite{hu2026tlt}} & \textbf{Code location (\code{fastrl} @ \code{bce3df7})} \\
+\midrule
+Spot Trainer (non-blocking drafter training) & Drafter training moved into rollout bubbles & Drafter cost hidden in the bubble (Abstract, Sec.~4.2) & \code{eagle\_background\_trainer.py:35} \\
+DataBuffer, one-step offset & Bias toward short, early-finishing sequences & Partial + buffered data $\approx$ full-set training (Sec.~4.2) & \code{worker\_manager.py:489-493}; trainer \code{:276-302} \\
+Worker Coordinator (state machine) & Contention between drafter work and rollout & Stage-transition overhead $<$1\% of step (Sec.~6.4) & \code{worker\_manager.py:54-61}; ZeroMQ messaging \\
+Selective async checkpointing & Checkpoint I/O stalls & 893$\to$280$\to$97\,ms, 9.2\x{} (Fig.~17a) & \code{eagle\_background\_trainer.py:83, 119-148} \\
+Single-layer drafter & Drafter latency and training cost & 2.4\x{} faster than a 0.5B drafter (Sec.~4.1) & \code{eagle-train/eagle\_trainer.py:190, 256-258} \\
+Sequence packing & Padding waste in drafter training & 13.3$\to$29.6 samples/s, 2.2\x{} (Fig.~17b) & \code{eagle\_background\_trainer.py:410-417} \\
+Adaptive SD activation & SD overhead at large batch sizes & 2.44\x{} rollout case study (Fig.~14) & \code{eagle\_worker.py:196, 361-364}; \code{bs\_threshold: 32} \\
+Tree drafting & Low acceptance of single-path drafts & Peak 3.66\x{} SD speedup (Fig.~13b) & \code{eagle\_worker.py:748-821} \\
+Bucketed CUDAGraph & Graph memory for many SD strategies & 30.39$\to$10.69\,GB, 2.8\x{} (Table~5) & \code{server\_args.py:789-796} \\
+BEG-MAB strategy tuner & Manual SD hyperparameter tuning & Strategy selection across batch sizes (Sec.~6.3) & \code{eagle\_mab.py:197-292}; reward \code{eagle\_worker.py:1234-1240} \\
+Model-free $n$-gram drafter & No learned drafter early in training & Fallback keeps SD available (Sec.~5.3) & \code{ngram\_worker.py}; \code{server\_args.py:342-346} \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+
+\raggedright\footnotesize Directory prefixes: \code{eagle\_background\_trainer.py} is in \code{verl/workers/drafter/}; \code{worker\_manager.py} is in \code{verl/workers/rollout/sglang\_rollout/}; \code{eagle\_worker.py}, \code{eagle\_mab.py}, \code{server\_args.py}, and \code{ngram\_worker.py} are in \code{third-party/sglang/python/sglang/srt/} (the first, second, and fourth under \code{speculative/}).
+\end{table*}
+
+\subsection{Spot Trainer and DataBuffer: Overlapping Drafter Training}
+A naïve integration would append drafter training as a fourth sequential stage~\cite[Fig.~8]{hu2026tlt}. TLT's Spot Trainer (class \code{EagleBackgroundTrainer}) instead trains the drafter on \emph{partial} responses as soon as enough short sequences finish, in a non-blocking manner during the tail~\cite[Sec.~4.2]{hu2026tlt}. Training only on early finishers would bias the drafter toward short responses, so a DataBuffer caches hidden states and tokens from the inference stage and samples across steps with a one-step offset. In code, data are collected on the step \emph{before} each training step (\code{(step+1) \% interval == 0}), and the training batch is drawn from the last two RL steps (\code{buffer\_steps = 2}). The hidden states are reused from stage~2, so drafter training requires no extra prefill; the target is over 20\x{} larger than the drafter~\cite[Sec.~4.1]{hu2026tlt}.
+
+\subsection{Worker Coordinator: Preemptible Opportunistic Scheduling}
+A centralized coordinator on rank~0, implemented with ZeroMQ, tracks each rollout instance (for example, one TP\,=\,8 instance spans eight GPUs). The paper summarizes a worker's lifecycle as BUSY$\to$IDLE$\to$TRAINING~\cite[Sec.~4.2]{hu2026tlt}; the code implements five states, \code{IDLE}, \code{GENERATING}, \code{RELEASED}, \code{TRAINING}, and \code{COMPLETED}. Released workers are promoted to drafter training once \code{min\_workers\_for\_training} (default~1) are available, and \code{STOP\_TRAINING}/\code{BATCH\_COMPLETE} messages are broadcast when rollout ends, so drafter work behaves as a preemptible, low-priority ``spot'' task that never delays the RL step. The shipped drafter-training cadence is \code{training\_interval\_steps: 10}, consistent with the paper's finding that training every ten steps suffices~\cite[Sec.~6.4]{hu2026tlt}.
+
+\subsection{Selective Asynchronous Checkpointing}
+Preemptibility requires frequent drafter checkpoints, which would themselves stall training. TLT saves in a background thread via PyTorch Distributed Checkpoint (\code{dcp.async\_save}) and excludes the frozen parameters \code{model.embed\_tokens.weight} and \code{lm\_head.weight}. Measured checkpoint latency falls from 893\,ms (synchronous) to 280\,ms (asynchronous, 3.2\x) to 97\,ms (asynchronous and selective, 9.2\x{} versus synchronous)~\cite[Fig.~17a]{hu2026tlt}. The 9.2\x{} figure is an end-to-end latency measurement rather than a parameter-count ratio: overlapping I/O provides the first 3.2\x{}, and skipping the frozen embedding and LM head, which dominate a single-layer drafter's parameter count, provides the remaining 2.9\x{} (derived).
+
+\subsection{Drafter Architecture and Sequence Packing}
+The drafter is a single trainable transformer decoder layer (\code{num\_hidden\_layers = 1}) that reuses the target's frozen embedding and LM head, so roughly a $1/\text{num\_layers}$ fraction of the target's parameters is trained~\cite[Sec.~4.1]{hu2026tlt}. The paper's argument is that drafter latency is dominated by sequential depth: a Qwen2.5-0.5B drafter has 24 layers, and TLT's single-layer drafter of comparable parameter count is 2.4\x{} faster~\cite[Sec.~4.1]{hu2026tlt}. In code, the drafter loss is a Smooth-L1 (Huber) loss on hidden states plus a soft-target cross-entropy on logits, weighted 0.5/0.5, a more specific form of the paper's ``L1\,+\,CE.'' Within preemptible slots, sequence packing~\cite{krell2021packing} concatenates variable-length samples without padding, raising drafter-training throughput from 13.3 to 29.6 samples/s (2.2\x)~\cite[Fig.~17b]{hu2026tlt}.
+
+\subsection{Adaptive SD, Bucketed CUDAGraph, and BEG-MAB}
+The Adaptive SD manager enables SD only when the number of in-flight requests falls to a threshold (default~32)~\cite[Sec.~5.1]{hu2026tlt}. The code adds hysteresis that the paper does not describe: SD activates only after the batch has remained at or below 32 for ten consecutive checks (\code{adaptive\_spec\_warmup\_checks = 10}). Tree-based drafting explores \code{topK} branches for \code{Draft\_Depth} steps and verifies the \code{Tokens\_to\_Verify} highest-confidence candidates in parallel~\cite[Sec.~5.1, Fig.~9]{hu2026tlt}.
+
+Capturing a CUDA graph per SD strategy is memory-intensive. Bucketed CUDAGraph capture groups batch sizes into buckets, separates target and drafter graphs, and merges identical configurations. For Llama-3-8B (TP\,=\,4, four strategies), graph memory is 7.81\,GB for a single strategy, 30.39\,GB for naïve multi-strategy capture, and 10.69\,GB bucketed: a 2.8\x{} reduction relative to naïve capture at 1.37\x{} the single-strategy footprint~\cite[Table~5]{hu2026tlt}.
+
+Strategy selection is automated by a bucketed $\epsilon$-greedy multi-armed bandit (BEG-MAB) whose arms are $(\text{Draft\_Depth}, \text{topK}, \text{Tokens\_to\_Verify})$ tuples~\cite[Sec.~5.2, Alg.~1]{hu2026tlt}. The code confirms the reward: with mean committed tokens per request $a=\sum_i \text{accept\_len}_i/B + 1$, the reward is $a\,B/t_{\text{elapsed}}$, i.e., committed tokens per second. Code-level defaults not stated in the paper are $\epsilon=0.1$, a 1000-sample sliding window, batch-size bucket boundaries $\{1,2,5,21\}$, and an out-of-memory guard $\text{draft\_tokens}\times B\le 2048$. A model-free $n$-gram drafter in the style of Lookahead~\cite{zhao2024lookahead} (maximum match window~12, branch length~18) serves as the fallback before a learned drafter is available~\cite[Sec.~5.3]{hu2026tlt}. In a 128-request rollout of Qwen-32B on H100 GPUs, SD switches on below 32 remaining requests and the rollout completes in 138\,s versus 337\,s without SD, a 2.44\x{} speedup~\cite[Fig.~14]{hu2026tlt}.
+
+%% =====================================================================
+\section{An Assumption-Explicit Model of the Speedup}
+\label{sec:model}
+
+The closed forms in this section are \emph{modeled}~\cite{hibbs2026dashboard}; the measurements in~\cite{hu2026tlt} serve as empirical anchors. The models explain direction and saturation; they are not fitted predictors of the paper's tables.
+
+\subsection{SD as a Truncated Geometric Process}
+\label{sec:model-en}
+Assume the drafter proposes $\gamma$ tokens, each accepted independently with probability $\alpha$. If $A$ is the accepted-prefix length, $P(A\ge k)=\alpha^{k}$ for $k\le\gamma$, and one additional token is always committed, so the expected number of tokens per verification cycle is
+\begin{equation}
+\mathbb{E}[n] = \sum_{k=0}^{\gamma}\alpha^{k} = \frac{1-\alpha^{\gamma+1}}{1-\alpha}.
+\label{eq:en}
+\end{equation}
+As $\alpha\to1$, $\mathbb{E}[n]\to\gamma+1$; as $\gamma\to\infty$, $\mathbb{E}[n]\to1/(1-\alpha)$ (e.g., 5.0 at $\alpha=0.8$). This saturation matches the measured tapering of accept length with depth, which reaches 9.78 tokens at Draft\_Depth\,=\,16 and Tokens\_to\_Verify\,=\,128~\cite[Fig.~13a]{hu2026tlt}. The uniform-$\alpha$ assumption is violated in practice: measured acceptance declines with draft-token position~\cite[Fig.~16]{hu2026tlt}, so the model is qualitative.
+
+\subsection{Speedup and the Optimal Draft Depth}
+\label{sec:model-sp}
+Let $c=T_{\text{verify}}/T_{\text{draft}}$. One cycle costs one verification plus $\gamma$ draft steps, i.e., $1+\gamma/c$ verification-time units, giving
+\begin{equation}
+\text{speedup}(\gamma) = \frac{\mathbb{E}[n]}{1+\gamma/c}.
+\label{eq:speedup}
+\end{equation}
+The numerator saturates in $\gamma$ while the denominator grows linearly, so the speedup has an interior optimum. At $\alpha=0.8$, the optimum is $\gamma^{*}=3,5,7$ for $c=4,8,16$ (Fig.~\ref{fig:model}a), and it grows with $c$. This matches the measured grid qualitatively: accept length keeps rising with depth, but speedup peaks at 3.66\x{} at Draft\_Depth\,=\,12 and Tokens\_to\_Verify\,=\,64 and declines beyond it~\cite[Fig.~13b]{hu2026tlt}. Speedup is insensitive to \code{topK} (3.47--3.65\x{} for $\text{topK}\in[4,16]$)~\cite[Table~1]{hu2026tlt}, which justifies fixing \code{topK} and tuning the remaining two dimensions. These grids were measured at temperature~0 for stable accept-length readings, whereas RL rollouts use temperature~0.9.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_model.pdf}
+\caption{Modeled (not measured) behavior. (a)~Speedup~(\ref{eq:speedup}) versus draft depth for three verify-to-draft cost ratios $c$ at uniform acceptance $\alpha=0.8$; markers show interior optima. (b)~Aggregate SD benefit $k\,b(k)$~(\ref{eq:thresh}) with fitted $\tau=16$, peaking at $k=\tau$.}
+\label{fig:model}
+\end{figure}
+
+\subsection{Why SD Must Be Switched Off at Large Batch Sizes}
+\label{sec:model-th}
+As batch size grows, decoding becomes compute-bound and the marginal value of verification parallelism falls. The companion model represents the per-request benefit at $k$ active requests as $b(k)=b_0e^{-k/\tau}$ and enables SD when the aggregate benefit clears a switching overhead $O_{\text{SD}}$:
+\begin{equation}
+k\,b(k) = b_0\,k\,e^{-k/\tau} \;\ge\; O_{\text{SD}}.
+\label{eq:thresh}
+\end{equation}
+Since $\frac{d}{dk}\bigl(k e^{-k/\tau}\bigr)=e^{-k/\tau}(1-k/\tau)$, the aggregate benefit peaks at $k=\tau$ and decays thereafter (Fig.~\ref{fig:model}b), which explains the \emph{existence} of a batch-size threshold. The decay constant $\tau=16$ is a fit chosen to resemble the measured trend, not a value from the paper, and the deployed rule is a hard step (batch size $\le32$ with ten-check hysteresis) rather than this smooth model. The measured anchor is Table~4 of~\cite{hu2026tlt} (Fig.~\ref{fig:batch}): at Tokens\_to\_Verify\,=\,64, SD speedup falls from 3.62\x{} at batch size~1 to 1.70\x{} at batch size~32, and at batch size~32 the best configuration verifies the \emph{fewest} tokens (2.48\x{} at 16). A companion-dashboard statement that SD ``drops to 1.08\x{} at BS\,=\,32'' does not appear in that table and is not used here.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_batch.pdf}
+\caption{Measured SD speedup versus tokens verified per step for six batch sizes (Qwen2.5-32B, H100, TP\,=\,4, Draft\_Depth\,=\,10, topK\,=\,8). Data from~\cite[Table~4]{hu2026tlt}. Larger batches favor fewer verified tokens, motivating adaptive strategy selection.}
+\label{fig:batch}
+\end{figure}
+
+\subsection{The Drafter as a Moving Target}
+\label{sec:model-drift}
+The drafter minimizes $\mathcal{L}(\theta_t)=\mathbb{E}_{x\sim\pi_t}[-\log p_{\theta_t}(x)]$ against a policy $\pi_t$ that changes every step. Assuming a locally constant Fisher information $I_t$ and the local relation $\alpha\approx e^{-D_{\mathrm{KL}}}$, the companion model writes the per-step recursion
+\begin{equation}
+D_{\mathrm{KL}}(\pi_{t+1}\Vert p_{\theta_{t+1}}) \le D_{\mathrm{KL}}(\pi_t\Vert p_{\theta_t}) - \eta_d I_t + \delta_\pi + O(\eta_d^2),
+\label{eq:drift}
+\end{equation}
+where $\eta_d$ is the drafter step size and $\delta_\pi$ the per-step policy drift. To first order, acceptance is non-decreasing in expectation when $\eta_d I_t>\delta_\pi$: the drafter keeps up if it learns faster than the policy drifts. Three measurements are consistent with this picture: drafter top-3 accuracy dips after each target update and recovers within a few drafter iterations~\cite[Fig.~15]{hu2026tlt}; co-training raises accept length from 4.59 to 6.53 on RL rollouts (+42.3\%, derived) and from 3.76 to 5.15 on downstream MT-Bench tasks (+37.0\%, derived)~\cite[Table~6]{hu2026tlt}; and the adaptive drafter sustains higher acceptance at distant draft positions than a vanilla drafter~\cite[Fig.~16]{hu2026tlt}.
+
+\subsection{Amdahl Consistency Check}
+\label{sec:amdahl}
+If a fraction $f$ of step time is rollout and only rollout is accelerated by a factor $s$, the end-to-end speedup follows Amdahl's law~\cite{amdahl1967}:
+\begin{equation}
+S = \frac{1}{(1-f) + f/s}, \qquad s = \frac{f}{1/S-(1-f)}.
+\label{eq:amdahl}
+\end{equation}
+With the measured $f\approx0.85$~\cite[Fig.~1a]{hu2026tlt}, the ceiling is $1/(1-f)\approx6.7\times$. Inverting (\ref{eq:amdahl}) for the measured end-to-end range $S=1.66$--$2.12\times$ (Sec.~\ref{sec:eval}) implies a rollout-phase acceleration of $s\approx1.9$--$2.6\times$ (derived). This is comparable to the directly measured rollout speedups: 2.44\x{} in the 128-request case study~\cite[Fig.~14]{hu2026tlt} and 2.33--3.22\x{} in batch-size-1 micro-benchmarks~\cite[Table~2]{hu2026tlt} (Fig.~\ref{fig:amdahl}). The rollout-level and end-to-end measurements are therefore mutually consistent. The analysis also bounds the remaining headroom: even an unbounded rollout speedup cannot exceed 6.7\x{} end to end unless the non-rollout 15\% is also reduced. This check assumes that $f$ transfers across the evaluated models and clusters; the paper reports it for one configuration.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_amdahl.pdf}
+\caption{Amdahl bound (\ref{eq:amdahl}) with rollout fraction $f=0.85$~\cite[Fig.~1a]{hu2026tlt}. Shaded bands: measured end-to-end TLT speedups~\cite[Fig.~11]{hu2026tlt} and measured batch-size-1 rollout SD speedups~\cite[Table~2]{hu2026tlt}. Markers: rollout speedups implied by the lowest and highest end-to-end results (derived).}
+\label{fig:amdahl}
+\end{figure}
+
+%% =====================================================================
+\section{Evaluation Synthesis}
+\label{sec:eval}
+
+\subsection{Experimental Conditions of the Source Study}
+TLT is built on VeRL~\cite{sheng2025hybridflow} and Ray~\cite{moritz2018ray}, with SGLang~\cite{zheng2024sglang} as the rollout backend~\cite[Sec.~6.1]{hu2026tlt}. The primary testbed is eight NVIDIA DGX H100 servers (64 GPUs; per server, eight H100 GPUs, two Intel Xeon Platinum 8480C CPUs, and 2\,TB of memory; 900\,GB/s NVLink intra-node and 400\,Gb/s InfiniBand inter-node), plus a separate DGX A100 cluster. Models are Qwen2.5-7B, DeepSeek-R1-Distill-Qwen-7B, Qwen2.5-32B, and Llama-3.3-70B-Instruct. RL uses GRPO with temperature~0.9, a 32K-token maximum generation length, TP\,$\in\{2,4,8\}$, Adam, and BF16; RL data are a subset of Eurus-2-RL~\cite{cui2025prime}, and the drafter is warmed up on an OpenThoughts2-1M subset. Baselines are Open-R1~\cite{openr1}, VeRL, and TLT-Base (vanilla SD with the model-free drafter). The metric is token throughput, i.e., total prompt and response tokens in a global batch divided by the duration of one RL step, averaged over three steps after a warm-up step, with a trained drafter~\cite[Sec.~6.1]{hu2026tlt}. The reported gains are therefore \emph{per-step throughput at matched reward curves}, not a reduction in the number of steps to a target reward. Fig.~\ref{fig:e2e} and Table~\ref{tab:results} consolidate the reported results with their conditions.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_e2e.pdf}
+\caption{End-to-end RL training throughput normalized to VeRL (GRPO). Values from~\cite[Fig.~11]{hu2026tlt}; labels shown for TLT-Base and TLT. ``n/r'': no Open-R1 result reported for Llama-70B. The geometric-mean TLT speedup is 1.86\x{} on H100 and 1.79\x{} on A100.}
+\label{fig:e2e}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\caption{Consolidated Results Reported by Hu \emph{et al.}~\cite{hu2026tlt}, with Conditions (All Values Re-Verified Against arXiv:2511.16665v2)}
+\label{tab:results}
+\footnotesize
+\begin{tabular}{@{}L{3.2cm}L{4.9cm}L{6.6cm}L{1.5cm}@{}}
+\toprule
+\textbf{Result} & \textbf{Condition} & \textbf{Value} & \textbf{Source} \\
+\midrule
+End-to-end vs.\ VeRL, H100 & Qwen-7B / DS-7B / Qwen-32B / Llama-70B / geomean & TLT 1.76 / 1.71 / 2.12 / 1.86 / 1.86\x; TLT-Base 1.42 / 1.38 / 1.54 / 1.31 / 1.41\x & Fig.~11 \\
+End-to-end vs.\ VeRL, A100 & same order & TLT 1.73 / 1.70 / 2.07 / 1.66 / 1.79\x; TLT-Base 1.38 / 1.31 / 1.49 / 1.23 / 1.35\x & Fig.~11 \\
+Open-R1 vs.\ VeRL & both platforms, where reported & 0.06--0.25\x & Fig.~11 \\
+Cluster scaling, Qwen2.5-7B & 1 / 2 / 4 / 8 nodes (8 GPUs per node) & 1.21 / 1.45 / 1.62 / 1.76\x & Table~3 \\
+Cluster scaling, Qwen2.5-32B & 1 / 2 / 4 / 8 nodes & OOM / OOM / 1.83 / 2.12\x & Table~3 \\
+Rollout SD speedup by GPU & Qwen2.5-7B, BS\,=\,1, TP\,=\,1; tok/s with / without SD & B200 605.05 / 259.71 (2.33\x); H100 430.24 / 164.65 (2.61\x); A100 259.01 / 92.83 (2.79\x); RTX\,5090 293.84 / 100.89 (2.91\x); RTX\,4090 187.44 / 65.28 (2.87\x); RTX\,3090 166.41 / 51.75 (3.22\x) & Table~2 \\
+SD grid extrema & Qwen-32B, TP\,=\,4, BS\,=\,1, topK\,=\,8, temperature~0 & Speedup 3.66\x{} (depth 12, verify 64); accept length 9.78 (depth 16, verify 128) & Fig.~13 \\
+topK insensitivity & Qwen-32B, H100, TP\,=\,4, depth 12, verify 64 & topK 4--16: accept length 8.29--8.67; speedup 3.47--3.65\x & Table~1 \\
+Batch-size erosion & Qwen-32B, H100, TP\,=\,4, depth 10, topK\,=\,8 & 3.62\x{} (BS\,=\,1) $\to$ 1.70\x{} (BS\,=\,32) at verify 64; 2.48\x{} at BS\,=\,32, verify 16 & Table~4 \\
+Adaptive SD case study & 128 requests, Qwen-32B, H100, TP\,=\,4 & Rollout 337\,s $\to$ 138\,s (2.44\x) & Fig.~14 \\
+Bucketed CUDAGraph & Llama-3-8B, H100, TP\,=\,4, 4 strategies & 7.81 / 30.39 / 10.69\,GB (single / naïve / bucketed) & Table~5 \\
+Adaptive drafter accept length & Qwen2.5-7B base vs.\ after RL & RL rollouts 4.59$\to$6.53; downstream 3.76$\to$5.15 & Table~6 \\
+SD method comparison & Qwen2.5-7B, H100, TP\,=\,2, BS\,=\,1 & No SD 242.11 tok/s; Eagle 542.12 (2.24\x, 1\x{} train cost); HASS 553.91 (2.29\x, 3\x); Eagle-3 617.42 (2.55\x, 7\x) & Table~7 \\
+OSD-style drafter training & same; accept length (tok/s): original $\to$ trained $\to$ +OSD & 0.5B: 5.95 (363.87) $\to$ 6.68 (408.51) $\to$ 6.89 (421.35); Eagle: 1.57 (130.34) $\to$ 6.53 (542.12) $\to$ 6.77 (562.04) & Table~8 \\
+Spot Trainer optimizations & drafter checkpoint; drafter training & 893$\to$280$\to$97\,ms (9.2\x); 13.3$\to$29.6 samples/s (2.2\x) & Fig.~17 \\
+Overheads & --- & Stage transition $<$1\% of step; SD re-prefill $<$3\,s; drafter trained every 10 steps & Sec.~6.4 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{End-to-End Gains}
+TLT improves throughput over VeRL by 1.71--2.12\x{} on H100 and 1.66--2.07\x{} on A100, with geometric means of 1.86\x{} and 1.79\x{}, respectively (Fig.~\ref{fig:e2e}); the paper summarizes this as 1.7--2.1\x{} and as ``over 1.7\x''~\cite{hu2026tlt}. Because the algorithm and the tokens per step are unchanged, a throughput gain $S$ corresponds to a $1-1/S$ reduction in step time: 46\% at the H100 geometric mean and 53\% at the 2.12\x{} peak (derived). The difference between TLT-Base (1.41\x{} H100 geometric mean) and TLT (1.86\x) isolates the contribution of the adaptive learned drafter over model-free SD.
+
+\subsection{Scalability and Hardware Diversity}
+End-to-end gains grow with cluster and model size: for Qwen2.5-7B from 1.21\x{} on one node to 1.76\x{} on eight, and for Qwen2.5-32B from 1.83\x{} on four nodes to 2.12\x{} on eight; the 32B model runs out of memory on one or two nodes~\cite[Table~3]{hu2026tlt}. A plausible explanation, consistent with Sec.~\ref{sec:tail}, is that larger jobs produce longer stragglers and larger bubbles to harvest. Across GPU generations, the BS\,=\,1 rollout speedup ranges from 2.33\x{} (B200) to 3.22\x{} (RTX~3090)~\cite[Table~2]{hu2026tlt}. GPUs with lower memory bandwidth relative to compute tend to gain more, as the memory-to-compute argument predicts, although the ordering is not strictly monotone (RTX~5090: 2.91\x; RTX~4090: 2.87\x). These are rollout micro-benchmarks, not end-to-end training results.
+
+\subsection{Drafter Quality and SD Method Choice}
+Among the SD methods integrated into TLT, Eagle-3~\cite{li2025eagle3} achieves the highest speedup (2.55\x) but costs 7\x{} the per-step training of Eagle~\cite{li2024eagle} (2.24\x, 1\x{} cost), and HASS~\cite{zhang2025hass} falls between them (2.29\x, 3\x)~\cite[Table~7]{hu2026tlt}. TLT defaults to Eagle because the multi-pass ``training-time test'' of the stronger methods increases per-step cost and convergence difficulty, which matters inside a time-limited rollout bubble~\cite[Sec.~6.5]{hu2026tlt}. OSD-style training~\cite{liu2024osd} further improves both a Qwen2.5-0.5B drafter and an Eagle drafter~\cite[Table~8]{hu2026tlt}.
+
+\subsection{Overheads and Losslessness}
+Overheads are small: stage transitions add less than 1\% of step time, the SD re-prefill completes within 3\,s, and the drafter need only be trained every ten steps~\cite[Sec.~6.4]{hu2026tlt}. Most important for the central thesis, the VeRL and TLT average-reward curves overlap closely for Qwen2.5-7B and Qwen2.5-32B over the reported training window~\cite[Fig.~12]{hu2026tlt}. This is empirical evidence that the overlap-based speedup leaves learning dynamics unchanged.
+
+%% =====================================================================
+\section{Why Not Fully Asynchronous?}
+\label{sec:async}
+
+If idle GPUs can train the drafter, one might also update the \emph{policy} asynchronously during the long decode. Hu~\emph{et~al.} note that asynchronous RL with continuous batching ``mixes multiple policy versions'' within a rollout, biasing gradient estimates and drifting from on-policy toward off-policy training, whereas TLT's SD approach can be combined with limited asynchrony without introducing additional policy staleness~\cite[Sec.~7]{hu2026tlt}. Inequality~(\ref{eq:drift}) makes the contrast precise. TLT tolerates \emph{drafter} staleness because the drafter affects only SD's speed: a stale drafter lowers acceptance but cannot alter a verified token. Asynchronous RL tolerates \emph{policy} staleness, which enters the gradient directly; there, the analogue of $\delta_\pi$ is a bias injected into the update rather than a tracking error to be corrected. Table~\ref{tab:async} summarizes the distinction.
+
+\begin{table}[t]
+\centering
+\caption{Where Asynchrony Lives in RL-Acceleration Approaches}
+\label{tab:async}
+\footnotesize
+\begin{tabular}{@{}L{1.85cm}L{3.0cm}L{2.65cm}@{}}
+\toprule
+\textbf{Approach} & \textbf{What runs concurrently or is relaxed} & \textbf{Effect on the RL update} \\
+\midrule
+AReaL~\cite{fu2025areal} & Generation and training on different policy versions & Off-policy; staleness admitted \\
+APRIL~\cite{zhou2025april} & Over-provisioned rollouts; incomplete ones recycled across steps & Rollouts may span policy versions \\
+RollPacker~\cite{gao2025rollpacker} & Long and short rollouts batched into separate rounds & Synchronous scheduling \\
+TLT~\cite{hu2026tlt} & Drafter training, checkpoint I/O, SD in the tail & Unchanged; on-policy, token-level lossless \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% =====================================================================
+\section{Implementation Audit and Reproducibility}
+\label{sec:audit}
+
+The repository~\cite{fastrl} contains the RL trainer, workers, coordinator, and DataBuffer under \code{verl/}; drafter trainers and warm-up under \code{eagle-train/}; a vendored SGLang with adaptive SD, BEG-MAB, tree drafting, and the $n$-gram drafter under \code{third-party/sglang/}; and launch scripts under \code{examples/}. Pre-trained drafters are released as \code{mit-han-lab/Qwen2.5-7B-Eagle-RL} and \code{-32B-Eagle-RL}. The 7B script uses TP\,=\,4, FSDP2, Ulysses sequence parallelism of~4, GRPO with $n=8$, a 32K maximum response length, temperature~0.9, and one 8-GPU node. The 32B script uses TP\,=\,8, sequence parallelism of~8, eight 8-GPU nodes, and a 2048-token maximum prompt length, consistent with the paper's 8-node 32B configuration and its out-of-memory result at one or two nodes~\cite[Table~3]{hu2026tlt}.
+
+All eleven mechanisms in Table~\ref{tab:mech} are present and wired. Table~\ref{tab:diverge} lists where the implementation refines or departs from the published description.
+
+\begin{table}[t]
+\centering
+\caption{Implementation--Paper Divergences at Commit \code{bce3df7}}
+\label{tab:diverge}
+\footnotesize
+\begin{tabular}{@{}L{2.1cm}L{3.0cm}L{2.4cm}@{}}
+\toprule
+\textbf{Paper} & \textbf{Code at \code{bce3df7}} & \textbf{Implication} \\
+\midrule
+Drafter trained ``for free'' during RL & \code{enable\_drafter\_training} and \code{collect\_hidden\_states\_from\_sgl} default to \code{false} (\code{fastrl\_trainer.yaml}, lines 19, 26) & Online drafter training must be enabled explicitly \\
+Lifecycle BUSY$\to$IDLE$\to$ TRAINING & Five states, adding \code{RELEASED} and \code{COMPLETED} & Finer-grained preemption \\
+SD enabled below threshold & Also requires ten consecutive checks at $\le$32 & Hysteresis prevents flapping \\
+DataBuffer prioritizes previous step's long sequences & Uniform \code{random.sample} over last two steps; 512-token response window & Prioritization softer than described \\
+Frozen embedding and LM head & LM head trainable on the EAGLE-3 path (\code{eagle3\_trainer.py}, line 475) & Freezing is method-specific \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The first divergence is the most consequential for reproduction. The example scripts demonstrate adaptive SD with a \emph{pre-trained} \code{*-Eagle-RL} drafter, and data collection for drafter training returns early unless training is enabled (\code{worker\_manager.py:489-493}), and each drafter training step is skipped while hidden-state collection is off (\code{eagle\_background\_trainer.py:473-479}). Reproducing the paper's claim that the drafter is obtained as a free byproduct of RL therefore requires setting both flags to \code{true}; the supporting machinery (\code{EagleBackgroundTrainer}, the coordinator, and the DataBuffer) is fully present. This default is consistent with the paper's evaluation protocol, which measures throughput with a trained draft model~\cite[Sec.~6.1]{hu2026tlt}.
+
+\textbf{An additional observation on sequence packing.} The paper does not describe how packed drafter-training samples are separated, and the code does not appear to separate them. The packing routine concatenates samples into one sequence with an all-ones attention mask and no per-sample position or boundary information (\code{eagle\_background\_trainer.py:410-417}; model call at \code{:504}). The drafter models then default positions to a continuous range over the packed sequence and build a plain causal mask over it, with FlashAttention-2 explicitly replaced by eager attention (\code{verl/workers/drafter/model/qwen2\_eagle.py:88-89, 92-114, 193-197}). A static reading therefore indicates that tokens can attend to earlier samples in the same pack and that rotary positions continue across sample boundaries, which is the cross-contamination that packing-aware masking is designed to prevent~\cite{krell2021packing}. Because the drafter influences only acceptance, this can affect drafter accuracy and hence speed, but not the losslessness of rollouts. Its quantitative effect was not measured here.
+
+%% =====================================================================
+\section{Practical Implications for Deployment}
+\label{sec:practice}
+
+This section translates the evidence into guidance for teams operating RL post-training. Each statement is tied to the measurements above; where the guidance extrapolates beyond them, it is marked as such.
+
+\textbf{Expected benefit and cost.} At fixed cluster size, GPU-hours per RL step scale with step time, so a throughput gain $S$ reduces per-step GPU-hours by $1-1/S$: 41\% at 1.7\x{} and 46\% at the 1.86\x{} H100 geometric mean (derived). As an order-of-magnitude illustration only, if a gain in this range carried over to a run like the 33,792 GPU-hour production trace of Sec.~\ref{sec:intro}, the savings would be roughly 14,000--16,000 GPU-hours. TLT was not evaluated on that workload or on H20 GPUs.
+
+\textbf{When the approach pays off.} The evidence points to four favorable conditions: (1)~rollout dominates step time, since the Amdahl bound (\ref{eq:amdahl}) caps gains at $1/(1-f)$; (2)~response lengths are heavy-tailed, so many workers idle while few requests remain (Sec.~\ref{sec:tail}); (3)~models and clusters are large, where measured gains are highest (Table~\ref{tab:results}); and (4)~decoding is memory-bandwidth-bound, where SD's relative gain is largest. Gains are smaller when the residual batch stays large: at batch size~32 the best measured SD speedup is 2.48\x, compared with 3.62\x{} at batch size~1.
+
+\textbf{Configuration checklist (code-confirmed).} (i)~Set \code{enable\_drafter\_training} and \code{collect\_hidden\_states\_from\_sgl} to \code{true} to obtain online drafter adaptation. (ii)~Start from a pre-trained \code{*-Eagle-RL} drafter or the $n$-gram fallback. (iii)~Keep \code{bs\_threshold: 32} and \code{training\_interval\_steps: 10} as initial values; both are supported by the paper's measurements. (iv)~Budget GPU memory for bucketed CUDA graphs: 1.37\x{} the single-strategy footprint in the measured Llama-3-8B configuration, versus 3.89\x{} for naïve capture.
+
+\textbf{Monitoring.} We suggest four metrics, based on quantities the paper reports: per-step token throughput (the paper's metric); mean accept length during rollout (an increase such as 4.59$\to$6.53 indicates that the drafter is tracking the policy); the fraction of rollout time with SD active; and reward-curve parity against a non-SD baseline run, which is the operational check that training remains lossless.
+
+\textbf{Risk profile.} Because SD verification is distribution-preserving, failures in the auxiliary path (a stale drafter, a preempted drafter-training job, or a poor BEG-MAB choice) degrade \emph{speed}, not correctness. This asymmetry is the main operational advantage of overlap-based acceleration over off-policy asynchrony, whose failure modes affect the learned policy itself.
+
+%% =====================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+
+\textbf{Modeling assumptions.} The Pareto tail (Sec.~\ref{sec:tail}), uniform per-token acceptance (Sec.~\ref{sec:model-en}), exponential benefit decay with fitted $\tau=16$ (Sec.~\ref{sec:model-th}), and constant Fisher information with $\alpha\approx e^{-D_{\mathrm{KL}}}$ (Sec.~\ref{sec:model-drift}) are assumptions of the companion model. Each is either contradicted by or absent from the measurements, and the models are used only qualitatively. The Amdahl check assumes that the single reported rollout fraction ($f\approx0.85$) applies across configurations.
+
+\textbf{Scope of the measured claims.} All speedups are per-step throughput (or per-decode SD speedup) at matched reward curves, not wall-clock time to a target accuracy. Hardware-diversity results are BS\,=\,1, TP\,=\,1 rollout micro-benchmarks. SD grids use temperature~0, whereas training uses~0.9. The drafter is claimed to be adequate for SD acceleration, not state of the art as a standalone model. BEG-MAB incurs $\epsilon=0.1$ exploration and assumes near-stationarity within its 1000-sample window.
+
+\textbf{Source consistency.} For the same nominal configuration (Qwen-32B, TP\,=\,4, depth~12, verify~64, topK\,=\,8), the paper reports 3.64\x{} in Table~1 and 3.66\x{} in Fig.~13b; the 0.5\% difference most likely reflects separate runs, and each value is cited with its source. The paper's summary range of 1.7--2.1\x{} rounds a minimum per-model value of 1.66\x{} (Llama-70B, A100).
+
+\textbf{Audit limits.} The code audit is static: it establishes that mechanisms and defaults exist at commit \code{bce3df7}, not that they reproduce the reported numbers on other hardware. The sequence-packing observation in Sec.~\ref{sec:audit} likewise rests on reading the code, not on a measured accuracy difference. No new experiments were run for this paper.
+
+%% =====================================================================
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Accelerating RL post-training.} Systems differ in how they relax synchronization. AReaL~\cite{fu2025areal} fully decouples generation from training and admits stale rollouts; APRIL~\cite{zhou2025april} over-provisions rollouts and recycles incomplete ones across steps; StreamRL~\cite{zhong2025streamrl} disaggregates generation and training with stream generation; and RollPacker~\cite{gao2025rollpacker} remains synchronous but batches long-tail rollouts into separate rounds. VeRL/HybridFlow~\cite{sheng2025hybridflow} provides the colocated baseline on which TLT builds. TLT is complementary to these systems: it preserves the RL algorithm and can be layered on top of limited asynchrony~\cite[Secs.~7--8]{hu2026tlt}. Concurrent work by Shao~\emph{et~al.}~\cite{shao2025beat} also applies speculative decoding to RL rollouts, from a distribution-aware angle. Because the rollout, reward, and update stages are shared by GRPO, RLOO~\cite{ahmadian2024rloo}, DAPO~\cite{yu2025dapo}, and REINFORCE++~\cite{hu2025reinforcepp}, the overlap principle is not specific to GRPO~\cite[Sec.~7]{hu2026tlt}.
+
+\textbf{Speculative decoding.} SD originates with~\cite{leviathan2023,chen2023}. Feature-level drafters (EAGLE~\cite{li2024eagle}, EAGLE-3~\cite{li2025eagle3}, HASS~\cite{zhang2025hass}) raise acceptance; online speculative decoding~\cite{liu2024osd} adapts drafters to shifting serving distributions; and retrieval-based drafting~\cite{zhao2024lookahead} requires no training. TLT's distinguishing problem is a \emph{target} that changes every step, which it addresses through opportunistic, preemptible drafter training.
+
+\textbf{Independent analyses.} Unlike a survey, this paper audits one system's claims against its released implementation, recomputes every reported quantity, and states the assumptions behind each explanatory model. The approach is intended to make systems results easier to verify and to adopt.
+
+%% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+TLT's central lesson is methodological as much as empirical: in reasoning RL, the long-tail cost is best recovered by \emph{overlapping} independent work in time rather than by \emph{approximating} the algorithm. Training a single-layer drafter on idle GPUs, scheduling that work preemptibly, hiding checkpoint I/O (9.2\x) and padding waste (2.2\x), and enabling lossless speculative decoding only in the memory-bound tail yield 1.7--2.1\x{} end-to-end speedups while reward curves remain indistinguishable from the synchronous baseline~\cite{hu2026tlt}. Our audit confirms that all eleven mechanisms are present in the released code, identifies five implementation details that practitioners need to know (including that online drafter training must be enabled explicitly), and shows through an Amdahl analysis that the end-to-end and rollout-level measurements are mutually consistent. Asynchronous-style utilization and synchronous-grade correctness are not mutually exclusive.
+
+\textbf{Future directions.} The companion model suggests three extensions that have not been evaluated~\cite{hibbs2026dashboard}: a variance-aware activation threshold $k^{*}(t)=k_0\bigl(1+\lambda V(t)/V(0)\bigr)$ with $V(t)=\mathrm{Var}(L_i\mid L_i>t)$; a multi-drafter ensemble weighted by batch-regime share, $\mathbb{E}[n_{\text{ens}}]=\sum_j w_j\mathbb{E}[n_j]$ with $w_j=|B_j|/B$; and curriculum-ordered rollouts that start likely-long, hard-to-draft sequences first. Open questions include the sample complexity of online distillation relative to policy drift, the optimal draft depth under position-dependent acceptance ($\alpha_k=\alpha_1\beta^{k-1}$), and drafter transfer across tasks. Hu~\emph{et~al.} identify further regimes where the approach may apply, including uniformly long responses and multi-turn tool-calling RL~\cite[Sec.~7]{hu2026tlt}.
+
+\section*{Acknowledgment}
+This is an independent analysis. The author thanks Q.~Hu, S.~Yang, J.~Guo, X.~Yao, Y.~Lin, Y.~Gu, H.~Cai, C.~Gan, A.~Klimovic, and S.~Han for the TLT work, released under CC-BY-4.0, and the \code{fastrl} code, released under Apache-2.0. All original experimental results are theirs.
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

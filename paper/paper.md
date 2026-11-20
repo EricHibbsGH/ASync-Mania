@@ -8,7 +8,7 @@
 
 ## Abstract
 
-Reinforcement-learning training of reasoning LLMs is throttled by a *long-tail* rollout problem: a handful of very long generations dominate each step while most workers sit idle. TLT attacks this not by approximating the algorithm but by overlapping otherwise-idle work in time. Its two pillars, an *Adaptive Drafter* trained opportunistically on idle GPUs during the tail, and an *Adaptive Rollout Engine* that turns on speculative decoding (SD) exactly when the batch shrinks into SD's sweet spot, convert wasted tail bubbles into useful compute while keeping training token-level lossless and strictly on-policy. The paper reports "over 1.7×" end-to-end speedup over state-of-the-art systems [Paper Abstract], with the figure-level range given as 1.7–2.1× over VeRL [Paper Fig 11], a geomean of 1.86× on H100 and 1.70× on A100, and a peak of 2.12× on Qwen-32B/H100 [Paper Fig 11, Tbl 3]. Rollout alone is ≈85% of step time [Paper §1, Fig 1a]. This paper frames TLT around its *asynchrony/concurrency* mechanisms, non-blocking drafter training, preemptible opportunistic scheduling, selective asynchronous checkpointing, and tail-phase adaptive SD, pairs each with its measured speedup *and its implementation in the released code*, develops a mathematical model of where the gains come from and why they saturate (using the dashboard's order-statistic, Markov-acceptance, optimal-stopping, and moving-target-convergence derivations, each with its assumptions flagged), and contrasts TLT's *lossless* synchrony with the off-policy drift risked by fully asynchronous RL systems. The thesis: you can capture async-style utilization gains without paying the correctness tax of async RL.
+Reinforcement-learning training of reasoning LLMs is throttled by a *long-tail* rollout problem: a handful of very long generations dominate each step while most workers sit idle. TLT attacks this not by approximating the algorithm but by overlapping otherwise-idle work in time. Its two pillars, an *Adaptive Drafter* trained opportunistically on idle GPUs during the tail, and an *Adaptive Rollout Engine* that turns on speculative decoding (SD) exactly when the batch shrinks into SD's sweet spot, convert wasted tail bubbles into useful compute while keeping training token-level lossless and strictly on-policy. The paper reports "over 1.7×" end-to-end speedup over state-of-the-art systems [Paper Abstract], with the figure-level range given as 1.7–2.1× over VeRL [Paper Fig 11], a geomean of 1.86× on H100 and 1.79× on A100, and a peak of 2.12× on Qwen-32B/H100 [Paper Fig 11, Tbl 3]. Rollout alone is ≈85% of step time [Paper §1, Fig 1a]. This paper frames TLT around its *asynchrony/concurrency* mechanisms, non-blocking drafter training, preemptible opportunistic scheduling, selective asynchronous checkpointing, and tail-phase adaptive SD, pairs each with its measured speedup *and its implementation in the released code*, develops a mathematical model of where the gains come from and why they saturate (using the dashboard's order-statistic, Markov-acceptance, optimal-stopping, and moving-target-convergence derivations, each with its assumptions flagged), and contrasts TLT's *lossless* synchrony with the off-policy drift risked by fully asynchronous RL systems. The thesis: you can capture async-style utilization gains without paying the correctness tax of async RL.
 
 ---
 
@@ -171,7 +171,7 @@ TLT is built on VeRL + Ray, a ZeroMQ coordinator, EAGLE training pipelines under
 | Result | Condition | Number | Source |
 |---|---|---|---|
 | End-to-end vs VeRL (headline) | over SOTA | >1.7× (abstract) / 1.7–2.1× (figure) | [Paper Abstract; Fig 11] |
-| End-to-end geomean | H100 / A100 | 1.86× / 1.70× | [Paper Fig 11] |
+| End-to-end geomean | H100 / A100 | 1.86× / 1.79× | [Paper Fig 11] |
 | End-to-end peak | Qwen-32B, H100, 8 nodes | 2.12× | [Paper Fig 11; Tbl 3] |
 | TLT vs VeRL, H100 | Qwen-7B / DS-7B / Qwen-32B / Llama-70B | 1.76 / 1.71 / 2.12 / 1.86× | [Paper Fig 11] |
 | TLT-Base vs VeRL, H100 | same models | 1.42 / 1.38 / 1.54 / 1.31× | [Paper Fig 11] |
@@ -250,7 +250,7 @@ Dashboard assumptions (modeled, not paper-validated):
 4. Fisher information ≈ constant; local α≈e^(−D_KL) (§5.4), convergence framing only.
  Plus the dashboard's §3 batch numbers ("1.08× at BS=32") are inconsistent with Tbl 4 and are not used.
 
-Schematic / approximate figures: `fig1_longtail_*` and `fig16_*` are SCHEMATIC (only stated anchors are real); `fig13` interior cells and `fig11` Open-R1 bars are figure-read/approximate; `dashboard_*` surfaces are modeled, not measured (figures/manifest.md).
+Schematic / approximate figures: `fig1_longtail_*` and `fig16_*` are SCHEMATIC (only stated anchors are real); `fig13` interior cells are figure-read/approximate; `dashboard_*` surfaces are modeled, not measured (figures/manifest.md).
 
 Code vs paper divergences (within-CONFIRMED): worker states are 5 not 3 (§4.2); "frozen LM head" is EAGLE-only, not EAGLE-3 (§4.4); DataBuffer uses random sampling rather than explicit long-sequence prioritization (§4.1); the 9.2× checkpoint figure is an end-to-end measurement, not a parameter ratio (§4.3).
 
@@ -274,7 +274,7 @@ Open problems [Dashboard §6]. (1) sample complexity of online distillation vs t
 
 ## 11. Conclusion
 
-TLT's lesson is methodological as much as empirical: the long-tail tax in reasoning RL is best paid back by overlapping concurrent work in time, not by approximating the algorithm. By training a one-layer drafter opportunistically on idle GPUs (non-blocking Spot Trainer + DataBuffer), harvesting bubbles with a preemptible coordinator, hiding checkpoint I/O (9.2×) and padding waste (2.2×), and switching on token-level-lossless speculative decoding only in the memory-bound tail (2.44× in the case study, peak 3.66× per-decode), TLT delivers >1.7× end-to-end (1.7–2.1× over VeRL; geomean 1.86×/1.70× on H100/A100; peak 2.12×) [Paper Abstract, Fig 11, Tbl 3] while leaving reward curves indistinguishable from the synchronous baseline [Paper Fig 12]. The mathematical model explains the magnitude and saturation of these gains *qualitatively*, with the caveats that those closed forms are the dashboard author's assumption-based scaffolding (one of which, the 5.7× Pareto example, is numerically wrong) and that the released code refines several paper details (5-state machine, EAGLE-only frozen LM head, online-training off by default). The standing result: async-style utilization and synchronous-grade correctness are not mutually exclusive, a design point the fully-asynchronous RL literature has yet to occupy.
+TLT's lesson is methodological as much as empirical: the long-tail tax in reasoning RL is best paid back by overlapping concurrent work in time, not by approximating the algorithm. By training a one-layer drafter opportunistically on idle GPUs (non-blocking Spot Trainer + DataBuffer), harvesting bubbles with a preemptible coordinator, hiding checkpoint I/O (9.2×) and padding waste (2.2×), and switching on token-level-lossless speculative decoding only in the memory-bound tail (2.44× in the case study, peak 3.66× per-decode), TLT delivers >1.7× end-to-end (1.7–2.1× over VeRL; geomean 1.86×/1.79× on H100/A100; peak 2.12×) [Paper Abstract, Fig 11, Tbl 3] while leaving reward curves indistinguishable from the synchronous baseline [Paper Fig 12]. The mathematical model explains the magnitude and saturation of these gains *qualitatively*, with the caveats that those closed forms are the dashboard author's assumption-based scaffolding (one of which, the 5.7× Pareto example, is numerically wrong) and that the released code refines several paper details (5-state machine, EAGLE-only frozen LM head, online-training off by default). The standing result: async-style utilization and synchronous-grade correctness are not mutually exclusive, a design point the fully-asynchronous RL literature has yet to occupy.
 
 ---
 
@@ -283,7 +283,7 @@ TLT's lesson is methodological as much as empirical: the long-tail tax in reason
 All figures are regenerated by `make_figures.py` (vector `.pdf`+`.svg`, colorblind-safe); provenance and exact-vs-schematic status are in `figures/manifest.md`.
 
 ![End-to-end speedup](figures/fig11_endtoend_speedup.svg)
-*Figure 1.* End-to-end RL training speedup vs VeRL=1.0, H100 + A100. [Paper Fig 11] (TLT/TLT-Base/VeRL exact; Open-R1 bars figure-read/approximate; some A100 Open-R1 cells illegible → n/a).
+*Figure 1.* End-to-end RL training speedup vs VeRL=1.0, H100 + A100. [Paper Fig 11] (all values are printed bar labels; Open-R1 reports no Llama-70B result → n/r).
 
 ![Batch erosion](figures/tbl4_batch_erosion.svg)
 *Figure 2.* SD speedup vs Tokens_to_Verify across batch sizes; the collapse to 1.70× motivates the elastic threshold. [Paper Tbl 4] (exact).

@@ -74,7 +74,7 @@ median= xmin*2**(1/alpha)                                                   # 1.
 | Value | Source + condition | Status |
 |---|---|---|
 | "over 1.7×" end-to-end | Abstract | ✓ |
-| 1.7–2.1× over VeRL; geomean **1.86× (H100) / 1.70× (A100)**; peak **2.12×** (Qwen-32B/H100) | Fig 11; Tbl 3 | ✓ (report both abstract + figure forms) |
+| 1.7–2.1× over VeRL; geomean **1.86× (H100) / 1.79× (A100)** (corrected 2026-11-19; was 1.70×); peak **2.12×** (Qwen-32B/H100) | Fig 11; Tbl 3 | ✓ (report both abstract + figure forms) |
 | Rollout ≈85% of step | §1, Fig 1a | ✓ |
 | Tbl 1 topK 4–16 → accept 8.29–8.67, speedup 3.47–3.65× (Qwen-32B, TP4, d12, v64) | Tbl 1 | ✓ |
 | Fig 13 peak speedup **3.66×** (d12/v64); max accept length **9.78** (d16/v128) | Fig 13 | ✓ |

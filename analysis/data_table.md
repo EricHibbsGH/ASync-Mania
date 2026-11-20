@@ -16,9 +16,9 @@ Every quantitative claim used in `paper.md`, with its exact source location and 
 | 3 | End-to-end | Rollout ≈ 85% of total RL step time | §1, item (1): "(∼85%) of the total step time"; Fig 1a | P |
 | 4 | End-to-end (H100) | TLT vs VeRL normalized throughput: Qwen-7B 1.76×, DeepSeek-7B 1.71×, Qwen-32B 2.12×, Llama-70B 1.86×, Geomean 1.86× (VeRL=1.00) | Fig 11 (left, H100) | P |
 | 5 | End-to-end (H100) | TLT-Base vs VeRL: Qwen-7B 1.42×, DeepSeek-7B 1.38×, Qwen-32B 1.54×, Llama-70B 1.31×, Geomean 1.41× | Fig 11 (left, H100) | P |
-| 6 | End-to-end (A100) | TLT vs VeRL: Qwen-7B 1.79×, DeepSeek-7B 1.66×, Qwen-32B 2.07×, Llama-70B 1.73×, Geomean 1.70× | Fig 11 (right, A100) | P |
-| 7 | End-to-end (A100) | TLT-Base vs VeRL: Qwen-7B 1.35×, DeepSeek-7B 1.23×, Qwen-32B 1.49×, Llama-70B 1.31×, Geomean 1.38× | Fig 11 (right, A100) | P |
-| 8 | End-to-end | Open-R1 normalized throughput well below VeRL (≈0.06–0.25× of VeRL across models; exact per-bar values partly illegible in figure) | Fig 11 (both panels) | P (approx from figure) |
+| 6 | End-to-end (A100) | TLT vs VeRL: Qwen-7B 1.73×, DeepSeek-7B 1.70×, Qwen-32B 2.07×, Llama-70B 1.66×, Geomean 1.79× | Fig 11 (right, A100) | P |
+| 7 | End-to-end (A100) | TLT-Base vs VeRL: Qwen-7B 1.38×, DeepSeek-7B 1.31×, Qwen-32B 1.49×, Llama-70B 1.23×, Geomean 1.35× | Fig 11 (right, A100) | P |
+| 8 | End-to-end | Open-R1 normalized throughput well below VeRL: H100 0.25 / 0.22 / 0.07 / n.r. / 0.18; A100 0.24 / 0.21 / 0.06 / n.r. / 0.17 (Qwen-7B / DS-7B / Qwen-32B / Llama-70B / Geomean; no Llama-70B result reported) | Fig 11 (both panels) | P |
 | 9 | Peak | Peak end-to-end speedup 2.12× on Qwen-32B / H100 (and 8 nodes) | Fig 11; Tbl 3 | P |
 | 10 | ByteDance trace | Model Qwen2.5-32B; hardware H20 96GB GPUs | Fig 2 caption | P |
 | 11 | ByteDance trace | 128 GPUs, 11 days, 385 steps | §1 item (3); Fig 2 | P |

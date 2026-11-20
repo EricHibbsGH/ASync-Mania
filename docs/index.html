@@ -79,10 +79,10 @@
   <div class="wrap">
     <h2><span class="num">A</span>Abstract</h2>
     <p>Reinforcement-learning training of reasoning LLMs is throttled by a long-tail rollout problem: a handful of very long generations dominate each step while most workers sit idle. TLT attacks this not by approximating the algorithm but by overlapping otherwise-idle work in time. Its two pillars, an Adaptive Drafter trained opportunistically on idle GPUs during the tail, and an Adaptive Rollout Engine that turns on speculative decoding (SD) exactly when the batch shrinks into SD's sweet spot, convert wasted tail bubbles into useful compute while keeping training token-level lossless and strictly on-policy.</p>
-    <p>The paper reports over 1.7&times; end-to-end speedup over state-of-the-art systems, with a figure-level range of 1.7&ndash;2.1&times; over VeRL, a geomean of 1.86&times; on H100 and 1.70&times; on A100, and a peak of 2.12&times; on Qwen-32B/H100. Rollout alone is about 85% of step time. This work frames TLT around its asynchrony and concurrency mechanisms, pairs each with its measured speedup and its location in the released code, develops a mathematical model of where the gains come from and why they saturate, and contrasts TLT's lossless synchrony with the off-policy drift risked by fully asynchronous RL systems. The thesis: you can capture async-style utilization gains without paying the correctness tax of async RL.</p>
+    <p>The paper reports over 1.7&times; end-to-end speedup over state-of-the-art systems, with a figure-level range of 1.7&ndash;2.1&times; over VeRL, a geomean of 1.86&times; on H100 and 1.79&times; on A100, and a peak of 2.12&times; on Qwen-32B/H100. Rollout alone is about 85% of step time. This work frames TLT around its asynchrony and concurrency mechanisms, pairs each with its measured speedup and its location in the released code, develops a mathematical model of where the gains come from and why they saturate, and contrasts TLT's lossless synchrony with the off-policy drift risked by fully asynchronous RL systems. The thesis: you can capture async-style utilization gains without paying the correctness tax of async RL.</p>
     <p class="muted">
       <span class="stat">&gt;1.7&times; end-to-end</span>
-      <span class="stat">1.86&times; / 1.70&times; geomean (H100 / A100)</span>
+      <span class="stat">1.86&times; / 1.79&times; geomean (H100 / A100)</span>
       <span class="stat">2.12&times; peak</span>
       <span class="stat">~85% rollout</span>
       <span class="stat">11/11 mechanisms code-confirmed</span>
@@ -119,7 +119,7 @@
     <h2><span class="num">D</span>Figure gallery</h2>
     <p class="muted">Vector figures regenerated from inline data arrays. Tags mark measured vs modeled vs schematic. Full provenance is in <a href="https://github.com/EricHibbsGH/ASync-Mania/blob/main/figures/manifest.md">figures/manifest.md</a>.</p>
     <div class="gallery">
-      <figure><img loading="lazy" src="./figures/fig11_endtoend_speedup.svg" alt="End-to-end speedup bars"><figcaption>End-to-end RL training speedup vs VeRL = 1.0, H100 and A100. <span class="tag paper">Paper Fig 11</span> TLT/TLT-Base/VeRL exact; Open-R1 bars figure-read.</figcaption></figure>
+      <figure><img loading="lazy" src="./figures/fig11_endtoend_speedup.svg" alt="End-to-end speedup bars"><figcaption>End-to-end RL training speedup vs VeRL = 1.0, H100 and A100. <span class="tag paper">Paper Fig 11</span> All values exact; Open-R1 reports no Llama-70B result.</figcaption></figure>
       <figure><img loading="lazy" src="./figures/tbl4_batch_erosion.svg" alt="Batch-size erosion curve"><figcaption>SD speedup vs Tokens_to_Verify across batch sizes; the collapse to 1.70&times; motivates the elastic threshold. <span class="tag paper">Paper Tbl 4</span></figcaption></figure>
       <figure><img loading="lazy" src="./figures/tbl2_gpu_diversity.svg" alt="GPU diversity bars"><figcaption>Rollout SD speedup across GPUs (BS = 1, TP = 1 micro-benchmark). <span class="tag paper">Paper Tbl 2</span></figcaption></figure>
       <figure><img loading="lazy" src="./figures/tbl3_cluster_scaling.svg" alt="Cluster scaling lines"><figcaption>End-to-end speedup vs cluster size; 32B is OOM at 1 to 2 nodes. <span class="tag paper">Paper Tbl 3</span></figcaption></figure>

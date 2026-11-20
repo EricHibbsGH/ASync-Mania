@@ -35,7 +35,29 @@ The paper was built and checked across seven phases (artifacts in `analysis/`):
 - Math hardening: every equation was re-derived. One dashboard figure was corrected: the Pareto expected-max-to-median ratio at alpha=2, B=128 is about 14x (exact and Monte-Carlo), not the dashboard's stated 5.7x.
 - Integrity: roughly 118 individually sourced claims; 15 verbatim quotes, each under 15 words (longest 8); nothing fabricated. Final verification: PASS (`analysis/FINAL_VERIFICATION.md`).
 
+### Correction (2026-11-19)
+
+A re-check against the arXiv v2 PDF found that the A100 bar labels of TLT Fig. 11 had been mis-assigned in this repository's earlier transcription.
+
+| A100 (VeRL = 1.00) | Qwen-7B | DeepSeek-7B | Qwen-32B | Llama-70B | Geomean |
+|---|---|---|---|---|---|
+| TLT | 1.73 | 1.70 | 2.07 | 1.66 | **1.79** (previously stated as 1.70) |
+| TLT-Base | 1.38 | 1.31 | 1.49 | 1.23 | **1.35** (previously stated as 1.38) |
+
+The Open-R1 values are also now exact: H100 0.25 / 0.22 / 0.07 / not reported / 0.18, and A100 0.24 / 0.21 / 0.06 / not reported / 0.17. The H100 results were correct and are unchanged. All sources, `fig11`, both PDFs and the site have been updated.
+
 ## Read the paper
+
+**IEEE conference version (recommended):** `ieee/main.pdf`, *Overlapping, Not Approximating: A Code-Grounded Systems Analysis of Lossless Long-Tail Acceleration in Reasoning-RL Training* (IEEEtran, two-column, 10 pages). It adds:
+
+- a mechanism → hidden cost → measured effect → code-location table;
+- an Amdahl consistency check showing that the end-to-end gains imply a 1.9–2.6× rollout-phase speedup, against a 6.7× ceiling;
+- deployment guidance: GPU-hour cost, adoption criteria, a config checklist and monitoring metrics;
+- a code observation on drafter sequence packing.
+
+Source: `ieee/main.tex` + `ieee/refs.bib`. Figures: `python ieee/make_figures_ieee.py`. arXiv-ready upload: `ieee/arxiv_submission.zip`. The full verification checklist is in `ieee/REVIEW_REPORT.md`.
+
+**Original long-form version:**
 
 - PDF: `paper/ASync-Mania.pdf` (single-column, US Letter, 24 pages).
 - Markdown source (frozen content): `paper/paper.md`.
@@ -47,6 +69,7 @@ The paper was built and checked across seven phases (artifacts in `analysis/`):
 ASync-Mania/
   README.md            this file
   LICENSE              CC-BY-4.0 (document), matching the source paper's license
+  ieee/                IEEE conference version: main.pdf, main.tex, refs.bib, figures, arXiv zip, review report
   paper/               ASync-Mania.pdf, paper.md, ASync-Mania.tex
   figures/             11 figures (pdf + svg) and manifest.md
   analysis/            data_table.md and the phase/verification artifacts

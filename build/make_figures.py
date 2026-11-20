@@ -42,13 +42,13 @@ def save(fig, name):
 
 # ---------------------------------------------------------------- Fig 11
 def fig_endtoend():
-    """[Paper Fig 11] End-to-end speedup vs VeRL(=1.0). Open-R1 bars approx (figure-read);
-    some A100 Open-R1 cells illegible (n/a)."""
+    """[Paper Fig 11] End-to-end speedup vs VeRL(=1.0). All values are printed bar labels
+    (re-checked vs arXiv v2, 2026-11-19); Open-R1 reports no Llama-70B result (n/r)."""
     models = ["Qwen-7B", "DeepSeek-7B", "Qwen-32B", "Llama-70B", "Geomean"]
-    H = {"Open-R1": [0.25,0.22,0.07,0.18,0.16], "VeRL":[1,1,1,1,1],
+    H = {"Open-R1": [0.25,0.22,0.07,np.nan,0.18], "VeRL":[1,1,1,1,1],
          "TLT-Base":[1.42,1.38,1.54,1.31,1.41], "TLT":[1.76,1.71,2.12,1.86,1.86]}
-    A = {"Open-R1": [0.24,0.21,np.nan,np.nan,0.17], "VeRL":[1,1,1,1,1],
-         "TLT-Base":[1.35,1.23,1.49,1.31,1.38], "TLT":[1.79,1.66,2.07,1.73,1.70]}
+    A = {"Open-R1": [0.24,0.21,0.06,np.nan,0.17], "VeRL":[1,1,1,1,1],
+         "TLT-Base":[1.38,1.31,1.49,1.23,1.35], "TLT":[1.73,1.70,2.07,1.66,1.79]}
     order = ["Open-R1","VeRL","TLT-Base","TLT"]
     col = {"Open-R1":C["grey"],"VeRL":C["sky"],"TLT-Base":C["orange"],"TLT":C["green"]}
     fig, axes = plt.subplots(1,2, figsize=(11,4.2), sharey=True)
@@ -66,7 +66,7 @@ def fig_endtoend():
         ax.set_title(f"{title}", fontsize=11); ax.set_ylim(0,2.4)
     axes[0].set_ylabel("Norm. training throughput (VeRL = 1.0)")
     axes[0].legend(ncol=4, loc="upper left", fontsize=8.5, bbox_to_anchor=(0,1.16))
-    fig.suptitle("End-to-end RL training speedup  [Paper Fig 11]  (Open-R1 bars approx; A100 n/a = illegible)",
+    fig.suptitle("End-to-end RL training speedup  [Paper Fig 11]  (Open-R1: no Llama-70B result)",
                  fontsize=10, y=1.02)
     save(fig, "fig11_endtoend_speedup")
 

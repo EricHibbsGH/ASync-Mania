@@ -2,6 +2,12 @@
 
 Every change from the prior `paper.md` draft, grouped by type, each with its source. Provenance tags: [Paper], [Dashboard], [Code: path], [Author synthesis].
 
+## 2026-11-19: Fig. 11 correction and IEEE version
+- **A100 end-to-end values corrected** after a re-read of the arXiv v2 PDF; the earlier transcription had shifted the bar labels between models. TLT is now 1.73 / 1.70 / 2.07 / 1.66, **geomean 1.79×** (was 1.70×). TLT-Base is now 1.38 / 1.31 / 1.49 / 1.23, geomean 1.35× (was 1.38×). The order is Qwen-7B / DS-7B / Qwen-32B / Llama-70B. Recomputed geomeans: 1.783 and 1.349. [Paper Fig 11]
+- **Open-R1 bars now exact.** H100 0.25 / 0.22 / 0.07 / n.r. / 0.18; A100 0.24 / 0.21 / 0.06 / n.r. / 0.17. No Llama-70B result is reported for Open-R1. [Paper Fig 11]
+- Updated: `paper/paper.md`, `paper/ASync-Mania.tex`, both PDFs, `build/make_figures.py` → `fig11_*`, `analysis/data_table.md` rows 6–8, `analysis/phase3_accuracy.md`, `figures/manifest.md`, `docs/index.html`. H100 values are unchanged.
+- **Added `ieee/`:** the IEEEtran conference version with re-verified numbers, every code line reference re-checked at `fastrl@bce3df7`, a new sequence-packing observation [Code: verl/workers/drafter/model/qwen2_eagle.py:88-114], an Amdahl consistency check, and deployment guidance. See `ieee/REVIEW_REPORT.md`.
+
 ## Code-grounded (new [Code] axis added throughout §4–§5, §8)
 - **Spot Trainer → `EagleBackgroundTrainer`** named and cited. [Code: verl/workers/drafter/eagle_background_trainer.py:35]
 - **Worker states: 5, not 3.** Corrected "BUSY/IDLE/TRAINING" to note the code's `IDLE/GENERATING/RELEASED/TRAINING/COMPLETED` (BUSY=GENERATING, IDLE=RELEASED). [Code: worker_manager.py:54-61]
