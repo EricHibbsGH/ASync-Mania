@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ASync-Mania: Asynchronous-Style Speedup in Reasoning-RL Training</title>
-<meta name="description" content="An independent, fully cited analysis of asynchronous and non-blocking speedup techniques in reasoning-RL training, anchored on TLT / FastRL. Not the original ASPLOS paper.">
+<title>Speeding Up LLM RL with Idle GPU Time: An Independent Code Audit of TLT</title>
+<meta name="description" content="An independent, code-level audit of TLT (ASPLOS '26): how it speeds up reinforcement-learning training of reasoning LLMs by using idle GPU time, verified against the released fastrl code with runnable scripts.">
 <style>
   :root{
     --ink:#1a1d22; --muted:#5b636e; --line:#e3e6ea; --bg:#ffffff; --soft:#f6f8fa;
@@ -34,19 +34,24 @@
   h2 .num{color:var(--muted);font-weight:500;margin-right:8px}
   p{margin:0 0 14px}
   .muted{color:var(--muted)}
-  .viewer{width:100%;height:75vh;min-height:520px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
-  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:6px}
+  .viewer{width:100%;height:80vh;min-height:560px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:6px}
   .legend .item{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-  .legend code{background:var(--accent-soft);color:#0a3aa8;padding:2px 7px;border-radius:6px;font-size:13.5px;white-space:nowrap}
-  .legend .item p{margin:8px 0 0;font-size:14.5px;color:var(--muted)}
+  .legend b{font-size:15px}
+  .legend .item p{margin:6px 0 0;font-size:14.5px;color:var(--muted)}
+  .checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .checks .item{border:1px solid var(--line);border-radius:10px;padding:16px;background:#fff}
+  .checks .res{display:inline-block;font-size:13px;font-weight:600;padding:2px 8px;border-radius:6px;background:#e7f3ea;color:#1c6b35;margin-bottom:6px}
+  .checks .res.warn{background:#fdeede;color:#9a5b12}
+  .checks code{font-size:13.5px}
+  .checks p{font-size:14.5px;color:var(--muted);margin:6px 0 0}
   .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:20px}
   figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
   figure img{width:100%;height:auto;display:block;background:#fff;padding:12px}
   figcaption{padding:12px 14px;font-size:14px;color:var(--muted);border-top:1px solid var(--line)}
-  .tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:5px;margin-left:2px;white-space:nowrap}
+  .tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:5px;margin-right:4px;white-space:nowrap}
   .tag.paper{background:#e7f3ea;color:#1c6b35}
-  .tag.dash{background:#fdeede;color:#9a5b12}
-  .tag.schem{background:#f1ecfb;color:#5b3aa6}
+  .tag.model{background:#fdeede;color:#9a5b12}
   .links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
   .links a.card{display:block;border:1px solid var(--line);border-radius:10px;padding:16px;color:var(--ink);background:#fff}
   .links a.card:hover{border-color:var(--accent);text-decoration:none}
@@ -61,16 +66,16 @@
 
 <header class="hero">
   <div class="wrap">
-    <p class="kicker">Independent analysis &middot; reasoning-RL systems</p>
-    <h1>Overlapping, Not Approximating: Asynchronous-Style Speedup in Reasoning-RL Training and the Lossless Design of TLT</h1>
-    <p class="lede">How TLT / FastRL accelerates reasoning-RL training by overlapping otherwise-idle work in time, while keeping training token-level lossless and strictly on-policy.</p>
+    <p class="kicker">Independent code audit &middot; LLM training systems</p>
+    <h1>Speeding Up LLM Reinforcement Learning with Idle GPU Time: An Independent Code Audit of TLT</h1>
+    <p class="lede">How TLT speeds up reinforcement-learning training of reasoning models by filling idle GPU time with useful work, what the released code actually does, and what an engineering team needs to know to use it.</p>
     <div class="banner">
-      <b>Independent analysis, not the original ASPLOS paper.</b> Authored by Eric Hibbs, built on Hu, Yang et al., <em>Taming the Long-Tail</em> (ASPLOS '26, arXiv:2511.16665v2, CC BY 4.0), with analytical models adapted from the interactive companion dashboard by Eric Hibbs. All original empirical results belong to the paper's authors.
+      <b>Eric Hibbs &middot; Independent Researcher, Atlanta, GA.</b> An independent analysis of Hu et al., <em>Taming the Long-Tail</em> (ASPLOS '26, arXiv:2511.16665, CC BY 4.0). All original experimental results belong to its authors.
     </div>
     <div class="cta">
-      <a class="btn" href="./ASync-Mania.pdf">Read the PDF</a>
-      <a class="btn alt" href="https://arxiv.org/abs/2511.16665">Original paper (arXiv)</a>
-      <a class="btn alt" href="https://github.com/mit-han-lab/fastrl">fastrl code</a>
+      <a class="btn" href="./Hibbs-TLT-Code-Audit.pdf">Read the paper (PDF)</a>
+      <a class="btn alt" href="https://github.com/EricHibbsGH/ASync-Mania/tree/main/ieee/verification">Verification scripts</a>
+      <a class="btn alt" href="https://arxiv.org/abs/2511.16665">Original TLT paper</a>
     </div>
   </div>
 </header>
@@ -78,15 +83,15 @@
 <section id="abstract">
   <div class="wrap">
     <h2><span class="num">A</span>Abstract</h2>
-    <p>Reinforcement-learning training of reasoning LLMs is throttled by a long-tail rollout problem: a handful of very long generations dominate each step while most workers sit idle. TLT attacks this not by approximating the algorithm but by overlapping otherwise-idle work in time. Its two pillars, an Adaptive Drafter trained opportunistically on idle GPUs during the tail, and an Adaptive Rollout Engine that turns on speculative decoding (SD) exactly when the batch shrinks into SD's sweet spot, convert wasted tail bubbles into useful compute while keeping training token-level lossless and strictly on-policy.</p>
-    <p>The paper reports over 1.7&times; end-to-end speedup over state-of-the-art systems, with a figure-level range of 1.7&ndash;2.1&times; over VeRL, a geomean of 1.86&times; on H100 and 1.79&times; on A100, and a peak of 2.12&times; on Qwen-32B/H100. Rollout alone is about 85% of step time. This work frames TLT around its asynchrony and concurrency mechanisms, pairs each with its measured speedup and its location in the released code, develops a mathematical model of where the gains come from and why they saturate, and contrasts TLT's lossless synchrony with the off-policy drift risked by fully asynchronous RL systems. The thesis: you can capture async-style utilization gains without paying the correctness tax of async RL.</p>
+    <p>Reinforcement-learning (RL) post-training of reasoning large language models is bottlenecked by rollout generation, which takes roughly 85% of step time in published measurements and is governed by a few very long responses. TLT (ASPLOS '26) reports 1.7&ndash;2.1&times; end-to-end speedups over VeRL without changing the RL algorithm, by training a draft model on otherwise-idle GPUs and enabling speculative decoding only in the long tail.</p>
+    <p>This paper is an independent, code-level audit of how those gains arise. It (i) traces eleven claimed mechanisms to file- and line-level locations in the released code and identifies five points where the implementation refines or departs from the published description, most consequentially that online drafter training ships disabled; (ii) executes a unit test of that online training path, which shows that under the pinned software versions the drafter's training forward pass is not causal and lets samples packed into one sequence attend to each other; (iii) re-verifies every reported quantity against the original publication; (iv) builds an assumption-explicit analytical model whose Amdahl bound shows that the measured end-to-end gains imply a 1.9&ndash;2.6&times; rollout-phase acceleration; and (v) distinguishes TLT's systems-level overlap from the algorithmic asynchrony of off-policy RL. The findings are distilled into deployment guidance.</p>
     <p class="muted">
-      <span class="stat">&gt;1.7&times; end-to-end</span>
       <span class="stat">1.86&times; / 1.79&times; geomean (H100 / A100)</span>
       <span class="stat">2.12&times; peak</span>
-      <span class="stat">~85% rollout</span>
-      <span class="stat">11/11 mechanisms code-confirmed</span>
-      <span class="stat">~118 sourced claims</span>
+      <span class="stat">11/11 mechanisms located in code</span>
+      <span class="stat">5 implementation&ndash;paper divergences</span>
+      <span class="stat">1 executed bug finding</span>
+      <span class="stat">6.7&times; Amdahl ceiling</span>
     </p>
   </div>
 </section>
@@ -94,61 +99,67 @@
 <section id="paper">
   <div class="wrap">
     <h2><span class="num">B</span>Read the paper</h2>
-    <p>Single-column, US Letter, 24 pages. If the inline viewer does not load in your browser, use the download button.</p>
-    <p><a class="btn" href="./ASync-Mania.pdf" download>Download ASync-Mania.pdf</a></p>
-    <embed class="viewer" src="./ASync-Mania.pdf" type="application/pdf">
-    <p class="muted" style="margin-top:10px">Cannot preview? <a href="./ASync-Mania.pdf">Open the PDF directly</a>.</p>
+    <p>IEEE conference format, two columns, 11 pages. If the inline viewer does not load in your browser, use the download button.</p>
+    <p><a class="btn" href="./Hibbs-TLT-Code-Audit.pdf" download>Download the PDF</a></p>
+    <embed class="viewer" src="./Hibbs-TLT-Code-Audit.pdf" type="application/pdf">
+    <p class="muted" style="margin-top:10px">Cannot preview? <a href="./Hibbs-TLT-Code-Audit.pdf">Open the PDF directly</a>. An earlier long-form draft (24 pages) remains available <a href="./ASync-Mania.pdf">here</a>; the IEEE version supersedes it.</p>
+  </div>
+</section>
+
+<section id="verification">
+  <div class="wrap">
+    <h2><span class="num">C</span>Check it yourself</h2>
+    <p>Every number and code citation in the paper can be re-checked without trusting the write-up. See the <a href="https://github.com/EricHibbsGH/ASync-Mania/tree/main/ieee/verification">verification folder</a> for instructions and saved outputs.</p>
+    <div class="checks">
+      <div class="item"><span class="res">44 / 44 pass</span><br><code>verify_numbers.py</code><p>Recomputes every derived quantity (ratios, geometric means, the Pareto order statistic with a seeded Monte Carlo run, the speculative-decoding model, and the Amdahl bound) and compares each with the printed value.</p></div>
+      <div class="item"><span class="res">41 / 41 pass</span><br><code>verify_code_claims.py</code><p>Checks every file:line code citation against the fastrl repository at commit <code>bce3df7</code>.</p></div>
+      <div class="item"><span class="res warn">defect reproduced</span><br><code>test_drafter_masking.py</code><p>Runs fastrl's drafter class the way the online trainer calls it. The forward pass is not causal, and packed samples attend to each other. A positive control on the standard model is causal.</p></div>
+    </div>
   </div>
 </section>
 
 <section id="provenance">
   <div class="wrap">
-    <h2><span class="num">C</span>Provenance: four-axis tags</h2>
-    <p>Every quantitative or mechanistic claim in the paper carries one of four tags, so a reader always knows where it came from.</p>
+    <h2><span class="num">D</span>Where each claim comes from</h2>
+    <p>Every quantitative or mechanistic statement in the paper belongs to one of four classes, and the class is stated where it appears.</p>
     <div class="legend">
-      <div class="item"><code>[Paper: &sect;/Fig/Tbl]</code><p>Measured in the source paper.</p></div>
-      <div class="item"><code>[Dashboard: Model Math &sect;N]</code><p>Modeled and assumption-based (Eric Hibbs). Not a paper result.</p></div>
-      <div class="item"><code>[Code: path]</code><p>Confirmed in the released fastrl source.</p></div>
-      <div class="item"><code>[Author synthesis]</code><p>This document's own derivation or framing.</p></div>
+      <div class="item"><b>Measured</b><p>Reported by the TLT authors; cited with figure or table number.</p></div>
+      <div class="item"><b>Code-confirmed</b><p>Verified in the released fastrl source; cited by file and line.</p></div>
+      <div class="item"><b>Modeled</b><p>Assumption-based closed forms; never presented as measurements.</p></div>
+      <div class="item"><b>Derived</b><p>Arithmetic or reasoning added in this paper from cited inputs.</p></div>
     </div>
   </div>
 </section>
 
 <section id="figures">
   <div class="wrap">
-    <h2><span class="num">D</span>Figure gallery</h2>
-    <p class="muted">Vector figures regenerated from inline data arrays. Tags mark measured vs modeled vs schematic. Full provenance is in <a href="https://github.com/EricHibbsGH/ASync-Mania/blob/main/figures/manifest.md">figures/manifest.md</a>.</p>
+    <h2><span class="num">E</span>Figures from the paper</h2>
+    <p class="muted">Regenerated from inline, audited data arrays by <a href="https://github.com/EricHibbsGH/ASync-Mania/blob/main/ieee/make_figures_ieee.py">make_figures_ieee.py</a>.</p>
     <div class="gallery">
-      <figure><img loading="lazy" src="./figures/fig11_endtoend_speedup.svg" alt="End-to-end speedup bars"><figcaption>End-to-end RL training speedup vs VeRL = 1.0, H100 and A100. <span class="tag paper">Paper Fig 11</span> All values exact; Open-R1 reports no Llama-70B result.</figcaption></figure>
-      <figure><img loading="lazy" src="./figures/tbl4_batch_erosion.svg" alt="Batch-size erosion curve"><figcaption>SD speedup vs Tokens_to_Verify across batch sizes; the collapse to 1.70&times; motivates the elastic threshold. <span class="tag paper">Paper Tbl 4</span></figcaption></figure>
-      <figure><img loading="lazy" src="./figures/tbl2_gpu_diversity.svg" alt="GPU diversity bars"><figcaption>Rollout SD speedup across GPUs (BS = 1, TP = 1 micro-benchmark). <span class="tag paper">Paper Tbl 2</span></figcaption></figure>
-      <figure><img loading="lazy" src="./figures/tbl3_cluster_scaling.svg" alt="Cluster scaling lines"><figcaption>End-to-end speedup vs cluster size; 32B is OOM at 1 to 2 nodes. <span class="tag paper">Paper Tbl 3</span></figcaption></figure>
-      <figure><img loading="lazy" src="./figures/fig17_spot_trainer.svg" alt="Spot-trainer ladders"><figcaption>Selective async checkpointing (893 to 280 to 97 ms, 9.2&times;) and sequence packing (13.3 to 29.6 samples/s, 2.2&times;). <span class="tag paper">Paper Fig 17</span></figcaption></figure>
-      <figure><img loading="lazy" src="./figures/tbl6_adaptive_drafter.svg" alt="Adaptive drafter accept length"><figcaption>Accept length, Target-Base to Target-R (+42% in RL). <span class="tag paper">Paper Tbl 6</span></figcaption></figure>
-      <figure><img loading="lazy" src="./figures/fig13_sd_grid_heatmaps.svg" alt="SD grid heatmaps"><figcaption>Depth &times; Verify grids for accept length and speedup; boxed extrema (9.78, 3.66&times;) verified. <span class="tag paper">Paper Fig 13</span> interior cells figure-read.</figcaption></figure>
-      <figure><img loading="lazy" src="./figures/fig16_accept_decay_SCHEMATIC.svg" alt="Accept-rate decay"><figcaption>Accept rate vs draft-token index, adaptive vs vanilla. <span class="tag schem">Schematic</span> endpoints ~32% / ~6% from the dashboard.</figcaption></figure>
-      <figure><img loading="lazy" src="./figures/dashboard_markov_surface.svg" alt="Markov speedup surface"><figcaption>Modeled SD speedup over (&alpha;, &gamma;). <span class="tag dash">Dashboard &sect;2</span> assumption-based, not measured.</figcaption></figure>
-      <figure><img loading="lazy" src="./figures/dashboard_threshold_curve.svg" alt="Threshold curve"><figcaption>Aggregate SD benefit k&middot;b(k), peak at k = &tau; = 16. <span class="tag dash">Dashboard &sect;3</span> assumption-based, not measured.</figcaption></figure>
-      <figure><img loading="lazy" src="./figures/fig1_longtail_SCHEMATIC.svg" alt="Long-tail schematic"><figcaption>Long-tail length distribution and under-utilized zone. <span class="tag schem">Schematic</span> not to scale; raw data not published as numbers.</figcaption></figure>
+      <figure><img loading="lazy" src="./figures/ieee_fig_e2e.png" alt="End-to-end training throughput normalized to VeRL on H100 and A100"><figcaption><span class="tag paper">Measured</span> End-to-end RL training throughput normalized to VeRL. Values from TLT Fig. 11.</figcaption></figure>
+      <figure><img loading="lazy" src="./figures/ieee_fig_batch.png" alt="Speculative decoding speedup versus tokens verified for six batch sizes"><figcaption><span class="tag paper">Measured</span> SD speedup vs. tokens verified per step for six batch sizes (TLT Table 4). Larger batches favor fewer verified tokens.</figcaption></figure>
+      <figure><img loading="lazy" src="./figures/ieee_fig_amdahl.png" alt="Amdahl bound with measured speedup bands"><figcaption><span class="tag model">Derived</span> Amdahl bound with 85% rollout fraction. The measured end-to-end gains imply a 1.9&ndash;2.6&times; rollout speedup, against a 6.7&times; ceiling.</figcaption></figure>
+      <figure><img loading="lazy" src="./figures/ieee_fig_model.png" alt="Modeled speedup versus draft depth and aggregate benefit curve"><figcaption><span class="tag model">Modeled</span> (a) Interior optimum in draft depth; (b) why SD should switch off at large batch sizes. Assumption-based, not measured.</figcaption></figure>
     </div>
   </div>
 </section>
 
 <section id="links">
   <div class="wrap">
-    <h2><span class="num">E</span>Links</h2>
+    <h2><span class="num">F</span>Links</h2>
     <div class="links">
       <a class="card" href="https://arxiv.org/abs/2511.16665"><div class="t">Original paper</div><div class="d">Taming the Long-Tail, ASPLOS '26 (arXiv:2511.16665). All original results are the authors'.</div></a>
-      <a class="card" href="https://github.com/mit-han-lab/fastrl"><div class="t">fastrl code</div><div class="d">The released implementation (Apache-2.0) grounding the mechanism claims.</div></a>
-      <a class="card" href="https://erichibbsgh.github.io/Taming-the-Long-Tail-an-interactive./"><div class="t">Interactive dashboard</div><div class="d">Eric Hibbs' companion; source of the analytical (assumption-based) models.</div></a>
-      <a class="card" href="https://github.com/EricHibbsGH/ASync-Mania"><div class="t">This repository</div><div class="d">Paper, figures, the verification artifacts, and the reproducible build.</div></a>
+      <a class="card" href="https://github.com/mit-han-lab/fastrl"><div class="t">fastrl code</div><div class="d">The released implementation (Apache-2.0) audited at commit bce3df7.</div></a>
+      <a class="card" href="https://erichibbsgh.github.io/Taming-the-Long-Tail-an-interactive./"><div class="t">Interactive dashboard</div><div class="d">The author's companion dashboard; source of the analytical models.</div></a>
+      <a class="card" href="https://github.com/EricHibbsGH/ASync-Mania"><div class="t">This repository</div><div class="d">Paper source, figures, verification scripts, and the response to external review.</div></a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p>Independent analysis by Eric Hibbs. Document licensed CC BY 4.0. The original paper (Hu, Yang, Guo, Yao, Lin, Gu, Cai, Gan, Klimovic, Han, ASPLOS '26) is CC BY 4.0 and all original empirical results are theirs; referenced fastrl code is Apache-2.0.</p>
+    <p>Independent analysis by Eric Hibbs. Document licensed CC BY 4.0. The original paper (Hu, Yang, Guo, Yao, Lin, Gu, Cai, Gan, Klimovic, Han, ASPLOS '26) is CC BY 4.0, and all original empirical results are theirs; the referenced fastrl code is Apache-2.0.</p>
+    <p>Use of AI tools: large language model tools, including Anthropic's Claude, were used to verify the findings (re-checking values, tracing code, and writing the verification scripts and tests) and to draft and edit the manuscript text. The research direction and the original analysis are the author's.</p>
   </div>
 </footer>
 
