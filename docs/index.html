@@ -52,7 +52,7 @@
     <div class="flex flex-wrap gap-2">
       <span class="badge badge-outline">Independent code audit</span>
       <span class="badge badge-outline">LLM training systems</span>
-      <span class="badge badge-outline">IEEE format &middot; 11 pages</span>
+      <span class="badge badge-outline">IEEE format &middot; 12 pages</span>
     </div>
     <h1 class="text-3xl sm:text-5xl font-bold leading-tight max-w-4xl">Speeding Up LLM Reinforcement Learning with Idle GPU Time: An Independent Code Audit of TLT</h1>
     <p class="text-lg sm:text-xl text-base-content/75 max-w-3xl">How TLT speeds up reinforcement-learning training of reasoning models by filling idle GPU time with useful work, what the released code actually does, and what an engineering team needs to know to use it.</p>
@@ -102,8 +102,8 @@
     <h2 class="text-2xl font-bold mb-4">Abstract</h2>
     <div class="card bg-base-100 border border-base-300">
       <div class="card-body text-base leading-relaxed gap-4">
-        <p>Reinforcement-learning (RL) post-training of reasoning large language models is bottlenecked by rollout generation, which takes roughly 85% of step time in published measurements and is governed by a few very long responses. TLT (ASPLOS '26) reports 1.7&ndash;2.1&times; end-to-end speedups over VeRL without changing the RL algorithm, by training a draft model on otherwise-idle GPUs and enabling speculative decoding only in the long tail.</p>
-        <p>This paper is an independent, code-level audit of how those gains arise. It (i) traces eleven claimed mechanisms to file- and line-level locations in the released code and identifies five points where the implementation refines or departs from the published description, most consequentially that online drafter training ships disabled; (ii) executes a unit test of that online training path, which shows that under the pinned software versions the drafter's training forward pass is not causal and lets samples packed into one sequence attend to each other; (iii) re-verifies every reported quantity against the original publication; (iv) builds an assumption-explicit analytical model whose Amdahl bound shows that the measured end-to-end gains imply a 1.9&ndash;2.6&times; rollout-phase acceleration; and (v) distinguishes TLT's systems-level overlap from the algorithmic asynchrony of off-policy RL. The findings are distilled into deployment guidance.</p>
+        <p>Training a reasoning large language model (LLM) with reinforcement learning (RL) is slow because of one stage: rollout, in which the model writes many candidate answers. Rollout takes roughly 85% of each training step, and a few very long answers set its pace while many GPUs sit idle. TLT (ASPLOS '26) uses that idle time to train a small draft model, then uses the draft model to speed up the remaining long answers with speculative decoding. It reports 1.7&ndash;2.1&times; faster training than the VeRL framework without changing the learning algorithm.</p>
+        <p>We checked how those gains arise. We traced eleven mechanisms described in the TLT paper to specific lines of its released code and found five places where the code differs from the paper. The most important is that the online draft-model training ships switched off. We then ran a small test of that training code. Under the pinned software versions, its training pass lets each token see later tokens and other examples packed into the same sequence, which a correct model must not do. We re-checked every reported number against the original paper. Using Amdahl's law, we show that the reported end-to-end gains imply a 1.9&ndash;2.6&times; rollout speedup, which matches the rollout speedups measured directly. We turn the findings into deployment guidance.</p>
       </div>
     </div>
   </section>
@@ -148,7 +148,7 @@
     <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
       <div>
         <h2 class="text-2xl font-bold">Read the paper</h2>
-        <p class="text-base-content/70">IEEE conference format, two columns, 11 pages.</p>
+        <p class="text-base-content/70">IEEE conference format, two columns, 12 pages.</p>
       </div>
       <a class="btn btn-outline btn-sm" href="./Hibbs-TLT-Code-Audit.pdf" download>Download PDF</a>
     </div>
