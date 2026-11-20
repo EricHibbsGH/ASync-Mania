@@ -12,7 +12,7 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{patterns,arrows.meta}
 \usepackage[hyphens]{url}
@@ -22,7 +22,14 @@
 \newcommand{\brkus}{\textunderscore\allowbreak}
 \newcommand{\code}[1]{{\small\ttfamily\let\_\brkus\hyphenchar\font=-1 #1}}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 \newcommand{\x}{\ensuremath{\times}}
+% Table helpers: code at table size (not enlarged), striped rows, roomier rows, group headers.
+\newcommand{\tcode}[1]{{\ttfamily\let\_\brkus\hyphenchar\font=-1 #1}}
+\definecolor{stripe}{gray}{0.93}
+\definecolor{grouphead}{gray}{0.82}
+\newcommand{\tablestyle}{\footnotesize\renewcommand{\arraystretch}{1.3}\rowcolors{2}{stripe}{white}}
+\newcommand{\group}[2]{\rowcolor{grouphead}\multicolumn{#1}{@{}l}{\textbf{#2}}\\}
 
 \begin{document}
 
@@ -164,27 +171,27 @@ Fig.~\ref{fig:timeline} contrasts a synchronous rollout with TLT's overlapped ex
 \centering
 \caption{TLT Mechanisms: What Each Overlaps or Hides, Measured Effect, and Code Location}
 \label{tab:mech}
-\footnotesize
-\begin{tabular}{@{}L{3.1cm}L{3.9cm}L{4.3cm}L{5.4cm}@{}}
+\tablestyle
+\begin{tabular}{@{}L{2.75cm}L{3.0cm}L{3.15cm}L{1.25cm}L{6.15cm}@{}}
 \toprule
-\textbf{Mechanism} & \textbf{Cost overlapped or hidden} & \textbf{Measured effect~\cite{hu2026tlt}} & \textbf{Code location (\code{fastrl} @ \code{bce3df7})} \\
+\rowcolor{white}\textbf{Mechanism} & \textbf{Cost it overlaps or hides} & \textbf{Measured effect} & \textbf{TLT ref.} & \textbf{Code location} (file\,:\,lines) \\
 \midrule
-Spot Trainer (non-blocking drafter training) & Drafter training moved into rollout bubbles & Drafter cost hidden in the bubble (Abstract, Sec.~4.2) & \code{eagle\_background\_trainer.py:35} \\
-DataBuffer, one-step offset & Bias toward short, early-finishing sequences & Partial + buffered data $\approx$ full-set training (Sec.~4.2) & \code{worker\_manager.py:489-493}; trainer \code{:276-302} \\
-Worker Coordinator (state machine) & Contention between drafter work and rollout & Stage-transition overhead $<$1\% of step (Sec.~6.4) & \code{worker\_manager.py:54-61}; ZeroMQ messaging \\
-Selective async checkpointing & Checkpoint I/O stalls & 893$\to$280$\to$97\,ms, 9.2\x{} (Fig.~17a) & \code{eagle\_background\_trainer.py:83, 119-148} \\
-Single-layer drafter & Drafter latency and training cost & 2.4\x{} faster than a 0.5B drafter (Sec.~4.1) & \code{eagle-train/eagle\_trainer.py:190, 256-258} \\
-Sequence packing & Padding waste in drafter training & 13.3$\to$29.6 samples/s, 2.2\x{} (Fig.~17b) & \code{eagle\_background\_trainer.py:410-417} \\
-Adaptive SD activation & SD overhead at large batch sizes & 2.44\x{} rollout case study (Fig.~14) & \code{eagle\_worker.py:196, 361-364}; \code{bs\_threshold: 32} \\
-Tree drafting & Low acceptance of single-path drafts & Peak 3.66\x{} SD speedup (Fig.~13b) & \code{eagle\_worker.py:748-821} \\
-Bucketed CUDAGraph & Graph memory for many SD strategies & 30.39$\to$10.69\,GB, 2.8\x{} (Table~5) & \code{server\_args.py:789-796} \\
-BEG-MAB strategy tuner & Manual SD hyperparameter tuning & Strategy selection across batch sizes (Sec.~6.3) & \code{eagle\_mab.py:197-292}; reward \code{eagle\_worker.py:1234-1240} \\
-Model-free $n$-gram drafter & No learned drafter early in training & Fallback keeps SD available (Sec.~5.3) & \code{ngram\_worker.py}; \code{server\_args.py:342-346} \\
+Spot Trainer (non-blocking drafter training) & Drafter training, moved into rollout bubbles & Drafter cost hidden in the bubble & Abstr., 4.2 & \tcode{eagle\_background\_trainer.py}\,:\,35 \\
+DataBuffer with one-step offset & Bias toward short, early-finishing sequences & Partial + buffered data $\approx$ full-set training & Sec.~4.2 & \tcode{worker\_manager.py}\,:\,489--493\newline \tcode{eagle\_background\_trainer.py}\,:\,276--302 \\
+Worker Coordinator (state machine) & Contention between drafter work and rollout & Stage transition $<$1\% of step & Sec.~6.4 & \tcode{worker\_manager.py}\,:\,54--61 \\
+Selective async checkpointing & Checkpoint I/O stalls & 893\,$\to$\,280\,$\to$\,97\,ms (9.2\x) & Fig.~17a & \tcode{eagle\_background\_trainer.py}\,:\,83, 119--148 \\
+Single-layer drafter & Drafter latency and training cost & 2.4\x{} faster than a 0.5B drafter & Sec.~4.1 & \tcode{eagle\_trainer.py}\,:\,190, 256--258 \\
+Sequence packing & Padding waste in drafter training & 13.3\,$\to$\,29.6 samples/s (2.2\x) & Fig.~17b & \tcode{eagle\_background\_trainer.py}\,:\,410--417 \\
+Adaptive SD activation & SD overhead at large batch sizes & 2.44\x{} rollout case study & Fig.~14 & \tcode{eagle\_worker.py}\,:\,196, 361--364 \\
+Tree drafting & Low acceptance of single-path drafts & 3.66\x{} peak SD speedup & Fig.~13b & \tcode{eagle\_worker.py}\,:\,748--821 \\
+Bucketed CUDAGraph & Graph memory for many SD strategies & 30.39\,$\to$\,10.69\,GB (2.8\x) & Table~5 & \tcode{server\_args.py}\,:\,789--796 \\
+BEG-MAB strategy tuner & Manual SD hyperparameter tuning & Strategy chosen per batch size & Sec.~6.3 & \tcode{eagle\_mab.py}\,:\,197--292\newline \tcode{eagle\_worker.py}\,:\,1234--1240 (reward) \\
+Model-free $n$-gram drafter & No learned drafter early in training & Fallback keeps SD available & Sec.~5.3 & \tcode{ngram\_worker.py}\newline \tcode{server\_args.py}\,:\,342--346 \\
 \bottomrule
 \end{tabular}
-\vspace{2pt}
+\vspace{3pt}
 
-\raggedright\footnotesize Directory prefixes: \code{eagle\_background\_trainer.py} is in \code{verl/workers/drafter/}; \code{worker\_manager.py} is in \code{verl/workers/rollout/sglang\_rollout/}; \code{eagle\_worker.py}, \code{eagle\_mab.py}, \code{server\_args.py}, and \code{ngram\_worker.py} are in \code{third-party/sglang/python/sglang/srt/} (the first, second, and fourth under \code{speculative/}).
+\raggedright\footnotesize Measured effects are from Hu \emph{et al.}~\cite{hu2026tlt}; code locations are in \code{fastrl} at commit \code{bce3df7}. Directories: \tcode{eagle\_background\_trainer.py} is in \tcode{verl/workers/drafter/}; \tcode{worker\_manager.py} in \tcode{verl/workers/rollout/sglang\_rollout/}; \tcode{eagle\_trainer.py} in \tcode{eagle-train/}; \tcode{server\_args.py} in \tcode{third-party/sglang/python/sglang/srt/}; and \tcode{eagle\_worker.py}, \tcode{eagle\_mab.py}, \tcode{ngram\_worker.py} in that directory's \tcode{speculative/} subfolder.
 \end{table*}
 
 \subsection{Spot Trainer and DataBuffer: Overlapping Drafter Training}
@@ -283,7 +290,7 @@ With the measured $f\approx0.85$~\cite[Fig.~1a]{hu2026tlt}, the ceiling is $1/(1
 \label{sec:eval}
 
 \subsection{Experimental Conditions of the Source Study}
-TLT is built on VeRL~\cite{sheng2025hybridflow} and Ray~\cite{moritz2018ray}, with SGLang~\cite{zheng2024sglang} as the rollout backend~\cite[Sec.~6.1]{hu2026tlt}. The primary testbed is eight NVIDIA DGX H100 servers (64 GPUs; per server, eight H100 GPUs, two Intel Xeon Platinum 8480C CPUs, and 2\,TB of memory; 900\,GB/s NVLink intra-node and 400\,Gb/s InfiniBand inter-node), plus a separate DGX A100 cluster. Models are Qwen2.5-7B, DeepSeek-R1-Distill-Qwen-7B, Qwen2.5-32B, and Llama-3.3-70B-Instruct. RL uses GRPO with temperature~0.9, a 32K-token maximum generation length, TP\,$\in\{2,4,8\}$, Adam, and BF16; RL data are a subset of Eurus-2-RL~\cite{cui2025prime}, and the drafter is warmed up on an OpenThoughts2-1M subset. Baselines are Open-R1~\cite{openr1}, VeRL, and TLT-Base (vanilla SD with the model-free drafter). The metric is token throughput, i.e., total prompt and response tokens in a global batch divided by the duration of one RL step, averaged over three steps after a warm-up step, with a trained drafter~\cite[Sec.~6.1]{hu2026tlt}. The reported gains are therefore \emph{per-step throughput at matched reward curves}, not a reduction in the number of steps to a target reward. Fig.~\ref{fig:e2e} and Table~\ref{tab:results} consolidate the reported results with their conditions.
+TLT is built on VeRL~\cite{sheng2025hybridflow} and Ray~\cite{moritz2018ray}, with SGLang~\cite{zheng2024sglang} as the rollout backend~\cite[Sec.~6.1]{hu2026tlt}. The primary testbed is eight NVIDIA DGX H100 servers (64 GPUs; per server, eight H100 GPUs, two Intel Xeon Platinum 8480C CPUs, and 2\,TB of memory; 900\,GB/s NVLink intra-node and 400\,Gb/s InfiniBand inter-node), plus a separate DGX A100 cluster. Models are Qwen2.5-7B, DeepSeek-R1-Distill-Qwen-7B, Qwen2.5-32B, and Llama-3.3-70B-Instruct. RL uses GRPO with temperature~0.9, a 32K-token maximum generation length, TP\,$\in\{2,4,8\}$, Adam, and BF16; RL data are a subset of Eurus-2-RL~\cite{cui2025prime}, and the drafter is warmed up on an OpenThoughts2-1M subset. Baselines are Open-R1~\cite{openr1}, VeRL, and TLT-Base (vanilla SD with the model-free drafter). The metric is token throughput, i.e., total prompt and response tokens in a global batch divided by the duration of one RL step, averaged over three steps after a warm-up step, with a trained drafter~\cite[Sec.~6.1]{hu2026tlt}. The reported gains are therefore \emph{per-step throughput at matched reward curves}, not a reduction in the number of steps to a target reward. Fig.~\ref{fig:e2e} and Tables~\ref{tab:e2e}--\ref{tab:results} consolidate the reported results with their conditions.
 
 \begin{figure*}[t]
 \centering
@@ -292,31 +299,95 @@ TLT is built on VeRL~\cite{sheng2025hybridflow} and Ray~\cite{moritz2018ray}, wi
 \label{fig:e2e}
 \end{figure*}
 
+\begin{table}[t]
+\centering
+\caption{End-to-End Speedup over VeRL Reported by Hu \emph{et al.}~\cite{hu2026tlt} (VeRL\,=\,1.00)}
+\label{tab:e2e}
+\tablestyle
+\textbf{(a)} By model and GPU (TLT Fig.~11)\par\vspace{2pt}
+\begin{tabular}{@{}L{2.3cm}C{0.95cm}C{1.15cm}C{0.95cm}C{1.15cm}@{}}
+\toprule
+\rowcolor{white} & \multicolumn{2}{c}{\textbf{H100}} & \multicolumn{2}{c}{\textbf{A100}} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+\rowcolor{white}\textbf{Model} & TLT & TLT-Base & TLT & TLT-Base \\
+\midrule
+Qwen2.5-7B & 1.76 & 1.42 & 1.73 & 1.38 \\
+DeepSeek-R1-7B & 1.71 & 1.38 & 1.70 & 1.31 \\
+Qwen2.5-32B & 2.12 & 1.54 & 2.07 & 1.49 \\
+Llama-3.3-70B & 1.86 & 1.31 & 1.66 & 1.23 \\
+\midrule
+\rowcolor{white}\textbf{Geomean} & \textbf{1.86} & 1.41 & \textbf{1.79}$^{*}$ & 1.35 \\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}
+\textbf{(b)} By cluster size, TLT only (TLT Table~3)\par\vspace{2pt}
+\begin{tabular}{@{}L{2.3cm}C{1.05cm}C{1.05cm}C{1.05cm}C{1.05cm}@{}}
+\toprule
+\rowcolor{white}\textbf{Model} & 1 node & 2 nodes & 4 nodes & 8 nodes \\
+\midrule
+Qwen2.5-7B & 1.21 & 1.45 & 1.62 & 1.76 \\
+Qwen2.5-32B & OOM & OOM & 1.83 & 2.12 \\
+\bottomrule
+\end{tabular}
+\vspace{3pt}
+
+\raggedright\footnotesize Nodes have 8 GPUs each; OOM = out of memory. Open-R1 reaches 0.06--0.25\x{} of VeRL where reported. $^{*}$As printed in the source; the geometric mean of the rounded per-model values is 1.78.
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Rollout Speedup from Speculative Decoding Across GPUs (Qwen2.5-7B, BS\,=\,1, TP\,=\,1; TLT Table~2)}
+\label{tab:gpu}
+\tablestyle
+\begin{tabular}{@{}L{1.6cm}C{1.9cm}C{1.9cm}C{1.4cm}@{}}
+\toprule
+\rowcolor{white}\textbf{GPU} & \textbf{With SD} (tok/s) & \textbf{Without SD} (tok/s) & \textbf{Speedup} \\
+\midrule
+B200 & 605.05 & 259.71 & 2.33\x \\
+H100 & 430.24 & 164.65 & 2.61\x \\
+A100 & 259.01 & 92.83 & 2.79\x \\
+RTX 5090 & 293.84 & 100.89 & 2.91\x \\
+RTX 4090 & 187.44 & 65.28 & 2.87\x \\
+RTX 3090 & 166.41 & 51.75 & 3.22\x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{table*}[t]
 \centering
-\caption{Consolidated Results Reported by Hu \emph{et al.}~\cite{hu2026tlt}, with Conditions (All Values Re-Verified Against arXiv:2511.16665v2)}
+\caption{Other Results Reported by Hu \emph{et al.}~\cite{hu2026tlt}, with Their Conditions (All Values Re-Verified Against arXiv:2511.16665v2)}
 \label{tab:results}
-\footnotesize
-\begin{tabular}{@{}L{3.2cm}L{4.9cm}L{6.6cm}L{1.5cm}@{}}
+\tablestyle
+\begin{tabular}{@{}L{4.0cm}L{5.6cm}L{5.6cm}L{1.3cm}@{}}
 \toprule
-\textbf{Result} & \textbf{Condition} & \textbf{Value} & \textbf{Source} \\
+\rowcolor{white}\textbf{Result} & \textbf{Condition} & \textbf{Value} & \textbf{TLT ref.} \\
 \midrule
-End-to-end vs.\ VeRL, H100 & Qwen-7B / DS-7B / Qwen-32B / Llama-70B / geomean & TLT 1.76 / 1.71 / 2.12 / 1.86 / 1.86\x; TLT-Base 1.42 / 1.38 / 1.54 / 1.31 / 1.41\x & Fig.~11 \\
-End-to-end vs.\ VeRL, A100 & same order & TLT 1.73 / 1.70 / 2.07 / 1.66 / 1.79\x; TLT-Base 1.38 / 1.31 / 1.49 / 1.23 / 1.35\x & Fig.~11 \\
-Open-R1 vs.\ VeRL & both platforms, where reported & 0.06--0.25\x & Fig.~11 \\
-Cluster scaling, Qwen2.5-7B & 1 / 2 / 4 / 8 nodes (8 GPUs per node) & 1.21 / 1.45 / 1.62 / 1.76\x & Table~3 \\
-Cluster scaling, Qwen2.5-32B & 1 / 2 / 4 / 8 nodes & OOM / OOM / 1.83 / 2.12\x & Table~3 \\
-Rollout SD speedup by GPU & Qwen2.5-7B, BS\,=\,1, TP\,=\,1; tok/s with / without SD & B200 605.05 / 259.71 (2.33\x); H100 430.24 / 164.65 (2.61\x); A100 259.01 / 92.83 (2.79\x); RTX\,5090 293.84 / 100.89 (2.91\x); RTX\,4090 187.44 / 65.28 (2.87\x); RTX\,3090 166.41 / 51.75 (3.22\x) & Table~2 \\
-SD grid extrema & Qwen-32B, TP\,=\,4, BS\,=\,1, topK\,=\,8, temperature~0 & Speedup 3.66\x{} (depth 12, verify 64); accept length 9.78 (depth 16, verify 128) & Fig.~13 \\
-topK insensitivity & Qwen-32B, H100, TP\,=\,4, depth 12, verify 64 & topK 4--16: accept length 8.29--8.67; speedup 3.47--3.65\x & Table~1 \\
-Batch-size erosion & Qwen-32B, H100, TP\,=\,4, depth 10, topK\,=\,8 & 3.62\x{} (BS\,=\,1) $\to$ 1.70\x{} (BS\,=\,32) at verify 64; 2.48\x{} at BS\,=\,32, verify 16 & Table~4 \\
-Adaptive SD case study & 128 requests, Qwen-32B, H100, TP\,=\,4 & Rollout 337\,s $\to$ 138\,s (2.44\x) & Fig.~14 \\
-Bucketed CUDAGraph & Llama-3-8B, H100, TP\,=\,4, 4 strategies & 7.81 / 30.39 / 10.69\,GB (single / naïve / bucketed) & Table~5 \\
-Adaptive drafter accept length & Qwen2.5-7B base vs.\ after RL & RL rollouts 4.59$\to$6.53; downstream 3.76$\to$5.15 & Table~6 \\
-SD method comparison & Qwen2.5-7B, H100, TP\,=\,2, BS\,=\,1 & No SD 242.11 tok/s; Eagle 542.12 (2.24\x, 1\x{} train cost); HASS 553.91 (2.29\x, 3\x); Eagle-3 617.42 (2.55\x, 7\x) & Table~7 \\
-OSD-style drafter training & same; accept length (tok/s): original $\to$ trained $\to$ +OSD & 0.5B: 5.95 (363.87) $\to$ 6.68 (408.51) $\to$ 6.89 (421.35); Eagle: 1.57 (130.34) $\to$ 6.53 (542.12) $\to$ 6.77 (562.04) & Table~8 \\
-Spot Trainer optimizations & drafter checkpoint; drafter training & 893$\to$280$\to$97\,ms (9.2\x); 13.3$\to$29.6 samples/s (2.2\x) & Fig.~17 \\
-Overheads & --- & Stage transition $<$1\% of step; SD re-prefill $<$3\,s; drafter trained every 10 steps & Sec.~6.4 \\
+\group{4}{Speculative decoding (Qwen2.5-32B, H100, TP\,=\,4)}
+Peak SD speedup in grid & BS\,=\,1, topK\,=\,8, temperature 0; depth 12, verify 64 & 3.66\x & Fig.~13b \\
+Longest accept length in grid & same; depth 16, verify 128 & 9.78 tokens & Fig.~13a \\
+Speedup across topK\,=\,4--16 & depth 12, verify 64 & 3.47--3.65\x{} (nearly flat) & Table~1 \\
+Accept length across topK\,=\,4--16 & depth 12, verify 64 & 8.29--8.67 tokens & Table~1 \\
+Speedup falls as batch grows & depth 10, topK\,=\,8, verify 64 & 3.62\x{} at BS\,=\,1 $\to$ 1.70\x{} at BS\,=\,32 & Table~4 \\
+Best speedup at batch size 32 & depth 10, topK\,=\,8, verify 16 & 2.48\x & Table~4 \\
+Adaptive SD case study & 128 requests & Rollout 337\,s $\to$ 138\,s (2.44\x) & Fig.~14 \\
+\group{4}{Speculative-decoding methods (Qwen2.5-7B, H100, TP\,=\,2, BS\,=\,1)}
+No SD (baseline) & --- & 242.11 tok/s (1.00\x) & Table~7 \\
+Eagle (TLT default) & accept length 6.53; training cost 1\x & 542.12 tok/s (2.24\x) & Table~7 \\
+HASS & accept length 6.67; training cost 3\x & 553.91 tok/s (2.29\x) & Table~7 \\
+Eagle-3 & accept length 6.83; training cost 7\x & 617.42 tok/s (2.55\x) & Table~7 \\
+\group{4}{Drafter quality}
+Accept length on RL rollouts & Qwen2.5-7B: base drafter $\to$ adaptive drafter after RL & 4.59 $\to$ 6.53 & Table~6 \\
+Accept length on downstream tasks & same, MT-Bench math, coding, reasoning & 3.76 $\to$ 5.15 & Table~6 \\
+OSD-style training, 0.5B drafter & accept length (tok/s): original $\to$ trained $\to$ +OSD & 5.95 (363.87) $\to$ 6.68 (408.51) $\to$ 6.89 (421.35) & Table~8 \\
+OSD-style training, Eagle drafter & same & 1.57 (130.34) $\to$ 6.53 (542.12) $\to$ 6.77 (562.04) & Table~8 \\
+\group{4}{System mechanisms and overheads}
+Drafter checkpoint latency & synchronous $\to$ async $\to$ selective async & 893 $\to$ 280 $\to$ 97\,ms (9.2\x) & Fig.~17a \\
+Drafter training throughput & padded batching $\to$ sequence packing & 13.3 $\to$ 29.6 samples/s (2.2\x) & Fig.~17b \\
+CUDA-graph memory & Llama-3-8B, H100, TP\,=\,4, 4 strategies: single / naïve / bucketed & 7.81 / 30.39 / 10.69\,GB & Table~5 \\
+Stage-transition overhead & --- & $<$1\% of step time & Sec.~6.4 \\
+SD switch re-prefill & --- & $<$3\,s & Sec.~6.4 \\
+Drafter training frequency & --- & every 10 RL steps suffices & Sec.~6.4 \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -325,7 +396,7 @@ Overheads & --- & Stage transition $<$1\% of step; SD re-prefill $<$3\,s; drafte
 TLT improves throughput over VeRL by 1.71--2.12\x{} on H100 and 1.66--2.07\x{} on A100, with geometric means of 1.86\x{} and 1.79\x{}, respectively, as printed in the source (Fig.~\ref{fig:e2e}). Recomputing the A100 geometric mean from the rounded per-model labels gives 1.78\x; the paper summarizes this as 1.7--2.1\x{} and as ``over 1.7\x''~\cite{hu2026tlt}. Because the algorithm and the tokens per step are unchanged, a throughput gain $S$ corresponds to a $1-1/S$ reduction in step time: 46\% at the H100 geometric mean and 53\% at the 2.12\x{} peak (derived). The difference between TLT-Base (1.41\x{} H100 geometric mean) and TLT (1.86\x) isolates the contribution of the adaptive learned drafter over model-free SD.
 
 \subsection{Scalability and Hardware Diversity}
-End-to-end gains grow with cluster and model size: for Qwen2.5-7B from 1.21\x{} on one node to 1.76\x{} on eight, and for Qwen2.5-32B from 1.83\x{} on four nodes to 2.12\x{} on eight; the 32B model runs out of memory on one or two nodes~\cite[Table~3]{hu2026tlt}. A plausible explanation, consistent with Sec.~\ref{sec:tail}, is that larger jobs produce longer stragglers and larger bubbles to harvest. Across GPU generations, the BS\,=\,1 rollout speedup ranges from 2.33\x{} (B200) to 3.22\x{} (RTX~3090)~\cite[Table~2]{hu2026tlt}. GPUs with lower memory bandwidth relative to compute tend to gain more, as the memory-to-compute argument predicts, although the ordering is not strictly monotone (RTX~5090: 2.91\x; RTX~4090: 2.87\x). These are rollout micro-benchmarks, not end-to-end training results.
+End-to-end gains grow with cluster and model size: for Qwen2.5-7B from 1.21\x{} on one node to 1.76\x{} on eight, and for Qwen2.5-32B from 1.83\x{} on four nodes to 2.12\x{} on eight; the 32B model runs out of memory on one or two nodes~\cite[Table~3]{hu2026tlt}. A plausible explanation, consistent with Sec.~\ref{sec:tail}, is that larger jobs produce longer stragglers and larger bubbles to harvest. Across GPU generations, the BS\,=\,1 rollout speedup ranges from 2.33\x{} (B200) to 3.22\x{} (RTX~3090)~\cite[Table~2]{hu2026tlt} (Table~\ref{tab:gpu}). GPUs with lower memory bandwidth relative to compute tend to gain more, as the memory-to-compute argument predicts, although the ordering is not strictly monotone (RTX~5090: 2.91\x; RTX~4090: 2.87\x). These are rollout micro-benchmarks, not end-to-end training results.
 
 \subsection{Drafter Quality and SD Method Choice}
 Among the SD methods integrated into TLT, Eagle-3~\cite{li2025eagle3} achieves the highest speedup (2.55\x) but costs 7\x{} the per-step training of Eagle~\cite{li2024eagle} (2.24\x, 1\x{} cost), and HASS~\cite{zhang2025hass} falls between them (2.29\x, 3\x)~\cite[Table~7]{hu2026tlt}. TLT defaults to Eagle because the multi-pass ``training-time test'' of the stronger methods increases per-step cost and convergence difficulty, which matters inside a time-limited rollout bubble~\cite[Sec.~6.5]{hu2026tlt}. OSD-style training~\cite{liu2024osd} further improves both a Qwen2.5-0.5B drafter and an Eagle drafter~\cite[Table~8]{hu2026tlt}.
@@ -343,10 +414,10 @@ If idle GPUs can train the drafter, one might also update the \emph{policy} asyn
 \centering
 \caption{Where Asynchrony Lives in RL-Acceleration Approaches}
 \label{tab:async}
-\footnotesize
+\tablestyle
 \begin{tabular}{@{}L{1.85cm}L{3.0cm}L{2.65cm}@{}}
 \toprule
-\textbf{Approach} & \textbf{What runs concurrently or is relaxed} & \textbf{Effect on the RL update} \\
+\rowcolor{white}\textbf{Approach} & \textbf{What runs concurrently or is relaxed} & \textbf{Effect on the RL update} \\
 \midrule
 AReaL~\cite{fu2025areal} & Generation and training on different policy versions & Off-policy; staleness admitted \\
 APRIL~\cite{zhou2025april} & Over-provisioned rollouts; incomplete ones recycled across steps & Rollouts may span policy versions \\
@@ -368,18 +439,22 @@ All eleven mechanisms in Table~\ref{tab:mech} are present and wired. Table~\ref{
 \centering
 \caption{Implementation--Paper Divergences at Commit \code{bce3df7}}
 \label{tab:diverge}
-\footnotesize
-\begin{tabular}{@{}L{2.1cm}L{3.0cm}L{2.4cm}@{}}
+\tablestyle
+\renewcommand{\tcode}[1]{{\scriptsize\ttfamily\let\_\brkus\hyphenchar\font=-1 #1}}
+\begin{tabular}{@{}L{2.0cm}L{3.55cm}L{2.0cm}@{}}
 \toprule
-\textbf{Paper} & \textbf{Code at \code{bce3df7}} & \textbf{Implication} \\
+\rowcolor{white}\textbf{What the paper says} & \textbf{What the code does} & \textbf{Why it matters} \\
 \midrule
-Drafter trained ``for free'' during RL & \code{enable\_drafter\_training} and \code{collect\_hidden\_states\_from\_sgl} default to \code{false} (\code{fastrl\_trainer.yaml}, lines 19, 26) & Online drafter training must be enabled explicitly \\
-Lifecycle BUSY$\to$IDLE$\to$ TRAINING & Five states, adding \code{RELEASED} and \code{COMPLETED} & Finer-grained preemption \\
-SD enabled below threshold & Also requires ten consecutive checks at $\le$32 & Hysteresis prevents flapping \\
-DataBuffer prioritizes previous step's long sequences & Uniform \code{random.sample} over last two steps; 512-token response window & Prioritization softer than described \\
-Frozen embedding and LM head & LM head trainable on the EAGLE-3 path (\code{eagle3\_trainer.py}, line 475) & Freezing is method-specific \\
+The drafter is trained ``for free'' during RL & Both online-training flags$^{\dagger}$ default to \tcode{false} (\tcode{fastrl\_trainer.yaml}\,:\,19, 26) & Online training must be enabled explicitly \\
+Workers cycle BUSY, IDLE, TRAINING & Five states; adds \tcode{RELEASED} and \tcode{COMPLETED} (\tcode{worker\_manager.py}\,:\,54--61) & Finer-grained preemption \\
+SD turns on below 32 requests & Also needs 10 consecutive checks at $\le$\,32 (\tcode{eagle\_worker.py}\,:\,196, 364) & Hysteresis prevents flapping \\
+Buffer favors the previous step's long sequences & Uniform \tcode{random.sample} over the last two steps (\tcode{eagle\_background\_trainer.py}\,:\,299--304) & Weaker prioritization than described \\
+Embedding and LM head are frozen & LM head is trainable on the EAGLE-3 path (\tcode{eagle3\_trainer.py}\,:\,475) & Freezing is method-specific \\
 \bottomrule
 \end{tabular}
+\vspace{3pt}
+
+\raggedright\footnotesize $^{\dagger}$\tcode{enable\_drafter\_training} and \tcode{collect\_hidden\_states\_from\_sgl}. All locations are in \code{fastrl} at commit \code{bce3df7}.
 \end{table}
 
 The first divergence is the most consequential for reproduction. The example scripts demonstrate adaptive SD with a \emph{pre-trained} \code{*-Eagle-RL} drafter, and data collection for drafter training returns early unless training is enabled (\code{worker\_manager.py:489-493}), and each drafter training step is skipped while hidden-state collection is off (\code{eagle\_background\_trainer.py:473-479}). Reproducing the paper's claim that the drafter is obtained as a free byproduct of RL therefore requires setting both flags to \code{true}; the supporting machinery (\code{EagleBackgroundTrainer}, the coordinator, and the DataBuffer) is fully present. This default is consistent with the paper's evaluation protocol, which measures throughput with a trained draft model~\cite[Sec.~6.1]{hu2026tlt}.
@@ -402,7 +477,7 @@ This section translates the evidence into guidance for teams operating RL post-t
 
 \textbf{Expected benefit and cost.} At fixed cluster size, GPU-hours per RL step scale with step time, so a throughput gain $S$ reduces per-step GPU-hours by $1-1/S$: 41\% at 1.7\x{} and 46\% at the 1.86\x{} H100 geometric mean (derived). As an order-of-magnitude illustration only, if a gain in this range carried over to a run like the 33,792 GPU-hour production trace of Sec.~\ref{sec:intro}, the savings would be roughly 14,000--16,000 GPU-hours. TLT was not evaluated on that workload or on H20 GPUs.
 
-\textbf{When the approach pays off.} The evidence points to four favorable conditions: (1)~rollout dominates step time, since the Amdahl bound (\ref{eq:amdahl}) caps gains at $1/(1-f)$; (2)~response lengths are heavy-tailed, so many workers idle while few requests remain (Sec.~\ref{sec:tail}); (3)~models and clusters are large, where measured gains are highest (Table~\ref{tab:results}); and (4)~decoding is memory-bandwidth-bound, where SD's relative gain is largest. Gains are smaller when the residual batch stays large: at batch size~32 the best measured SD speedup is 2.48\x, compared with 3.62\x{} at batch size~1.
+\textbf{When the approach pays off.} The evidence points to four favorable conditions: (1)~rollout dominates step time, since the Amdahl bound (\ref{eq:amdahl}) caps gains at $1/(1-f)$; (2)~response lengths are heavy-tailed, so many workers idle while few requests remain (Sec.~\ref{sec:tail}); (3)~models and clusters are large, where measured gains are highest (Table~\ref{tab:e2e}); and (4)~decoding is memory-bandwidth-bound, where SD's relative gain is largest. Gains are smaller when the residual batch stays large: at batch size~32 the best measured SD speedup is 2.48\x, compared with 3.62\x{} at batch size~1.
 
 \textbf{Configuration checklist (code-confirmed).} (i)~Set \code{enable\_drafter\_training} and \code{collect\_hidden\_states\_from\_sgl} to \code{true} to obtain online drafter adaptation. (ii)~Start from a pre-trained \code{*-Eagle-RL} drafter or the $n$-gram fallback. (iii)~Keep \code{bs\_threshold: 32} and \code{training\_interval\_steps: 10} as initial values; both are supported by the paper's measurements. (iv)~Budget GPU memory for bucketed CUDA graphs: 1.37\x{} the single-strategy footprint in the measured Llama-3-8B configuration, versus 3.89\x{} for naïve capture.
 
