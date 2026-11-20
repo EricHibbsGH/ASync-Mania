@@ -48,7 +48,7 @@ The Open-R1 values are also now exact: H100 0.25 / 0.22 / 0.07 / not reported / 
 
 ## Read the paper
 
-**IEEE conference version (recommended):** `ieee/main.pdf`, *Overlapping, Not Approximating: A Code-Grounded Systems Analysis of Lossless Long-Tail Acceleration in Reasoning-RL Training* (IEEEtran, two-column, 10 pages). It adds:
+**IEEE conference version (recommended):** `ieee/main.pdf`, *Speeding Up LLM Reinforcement Learning with Idle GPU Time: An Independent Code Audit of TLT* (IEEEtran, two-column, 10 pages). It adds:
 
 - a mechanism → hidden cost → measured effect → code-location table;
 - an Amdahl consistency check showing that the end-to-end gains imply a 1.9–2.6× rollout-phase speedup, against a 6.7× ceiling;

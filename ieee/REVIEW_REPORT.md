@@ -111,10 +111,10 @@ Because the A100 numbers sat in the old abstract ("1.70× on A100"), the most im
 ## 2. Claims, citations, and details requiring author confirmation
 
 1. **Accept the A100 correction** (geomean 1.79×, per-model 1.73/1.70/2.07/1.66; TLT-Base 1.38/1.31/1.49/1.23/1.35). Then also fix the old sources so your public record is consistent: `README.md`, `analysis/data_table.md` rows 6–8, `build/make_figures.py` (the `A` dict and the Open-R1 arrays), `paper/paper.md`, and the GitHub Pages site and dashboard if they show these values.
-2. **Author block.** Add your city and country (IEEE convention), and confirm you want `ericbhibbs@gmail.com` printed on a public PDF.
+2. ✅ **Author block:** "Independent Researcher, Atlanta, GA, USA" (added 2026-11-20). The printed email `ericbhibbs@gmail.com` is still yours to confirm or remove.
 3. ✅ **Repository link (ref. [13]) now resolves** (HTTP 200, public, checked 2026-11-19). Two follow-ups remain. (a) The repo was last pushed 2026-06-09, so it still has the old A100 numbers and lacks this `ieee/` folder; push both before posting the preprint. (b) The GitHub Pages site `https://erichibbsgh.github.io/ASync-Mania/` still returns 404. The paper doesn't cite it, but the repo README does, so re-enable Pages under Settings → Pages (source: `main` / `docs`) or drop the link.
 4. ✅ **Dashboard URL** (ref. [12]) resolves (HTTP 200), trailing `./` included.
-5. **New title.** I changed it to "…A Code-Grounded Systems Analysis of Lossless Long-Tail Acceleration in Reasoning-RL Training". Revert if you prefer the original.
+5. ✅ **Title simplified at your request (2026-11-20):** "Speeding Up LLM Reinforcement Learning with Idle GPU Time: An Independent Code Audit of TLT".
 6. **New derived analyses** (all arithmetic on cited inputs, labeled "derived"): the Amdahl consistency check (Sec. VI-E, Fig. 4), step-time reductions, the GPU-hour illustration (Sec. X), the +37.0% downstream gain, the 1.37×/3.89× memory ratios, and the 2.9× selectivity share. Confirm you're comfortable claiming them.
 7. **Added citations:** PPO [9], Roofline [10], and Amdahl [16] support statements that were already in the text. Approve or remove them.
 8. **Fig. 16 reading.** The dashboard's 32%/6% appears to be index 7, not 8. I removed the numbers. If you want them back, re-read the original figure at high zoom.
